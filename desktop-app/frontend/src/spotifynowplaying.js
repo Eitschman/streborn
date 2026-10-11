@@ -84,6 +84,22 @@ export function snapshotFromReply(reply) {
   };
 }
 
+// spotifySlotStillHolds decides whether the remembered Spotify key may stay lit
+// while the speaker reports only the generic /spotify/stream.ogg.
+//
+// The key is remembered so a next/prev on the remote, which can drop the slot
+// from the location, does not unlight it. But the Spotify app taking over the
+// "(STR)" speaker drops the slot the same way, and the key kept showing "now
+// playing" over a song the user had picked in the app (discussion #1077, issue
+// 14). The two differ in the context: next/prev stays in the key's playlist, a
+// takeover plays something else. An empty context proves nothing (the engine
+// can leave it empty), so the key keeps its light then.
+export function spotifySlotStillHolds(presetUri, snapshot) {
+  const ctx = normalizeSpotifyContext(snapshot && snapshot.context);
+  if (!ctx || !presetUri) return true;
+  return ctx === normalizeSpotifyContext(presetUri);
+}
+
 // spotifySongText is the "Artist - Track" part of the line, or '' when the
 // snapshot has no song yet (the line then shows the heading alone).
 export function spotifySongText(snapshot) {

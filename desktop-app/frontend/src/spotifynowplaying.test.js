@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {
   RECALL_EXPECT_MS, acceptSpotifyReply, beginRecall, normalizeSpotifyContext,
-  recallSettled, snapshotFromReply, spotifySongText,
+  recallSettled, snapshotFromReply, spotifySlotStillHolds, spotifySongText,
 } from './spotifynowplaying.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -96,5 +96,34 @@ describe('main.js wiring', () => {
     expect(main).toContain('if (acceptSpotifyReply(np, {');
     expect(main).toContain('state.spotifyNow = snap;');
     expect(main).not.toMatch(/state\.nowSpotify(Track|Artist|Cover|Context|Account)\b/);
+  });
+});
+
+// The Spotify app took over the "(STR)" speaker while key 5 was playing: the
+// location fell back to the generic stream and key 5 kept "now playing" over a
+// song picked in the app (discussion #1077, issue 14).
+describe('spotifySlotStillHolds', () => {
+  const KEY = 'spotify:track:SPIRIT';
+
+  it('drops the key when the engine plays a context the key does not hold', () => {
+    expect(spotifySlotStillHolds(KEY, { context: 'spotify:album:OTHER' })).toBe(false);
+  });
+
+  it('keeps the key through a next/prev inside its own context', () => {
+    expect(spotifySlotStillHolds('spotify:playlist:P', { context: 'spotify:playlist:P' })).toBe(true);
+  });
+
+  it('keeps the key when the engine wraps the context in a station', () => {
+    expect(spotifySlotStillHolds(KEY, { context: 'spotify:station:track:SPIRIT' })).toBe(true);
+  });
+
+  it('keeps the key when there is no context to judge by', () => {
+    expect(spotifySlotStillHolds(KEY, null)).toBe(true);
+    expect(spotifySlotStillHolds(KEY, { context: '' })).toBe(true);
+    expect(spotifySlotStillHolds('', { context: 'spotify:album:OTHER' })).toBe(true);
+  });
+
+  it('is what renderPresets asks before keeping the remembered slot', () => {
+    expect(main).toContain('!spotifySlotStillHolds(held.uri, state.spotifyNow)');
   });
 });
