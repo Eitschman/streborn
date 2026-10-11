@@ -722,6 +722,8 @@
   "share.groups.direct": "Tiesiogiai",
   "credits.title": "Atvirasis kodas ir padėkos",
   "credits.intro": "STR sukurta naudojant atvirąjį kodą. Ačiū projektams, kuriuos ji apima, susieja ar kuriais remiasi:",
+  "credits.ownLicense": "Pats STR platinamas pagal Apache License 2.0. Kūrinys, sukurtas STR pagrindu, išlaiko šį pranešimą ir naudoja savo pavadinimą.",
+  "credits.licenseLink": "Licencija",
   "credits.by": "autorius",
   "credits.researchTitle": "Tyrimai ir atvirkštinė inžinerija",
   "credits.researchIntro": "STR neplatina jų kodo, tačiau kelių esminių jos mechanizmų nebūtų be to, ką šie projektai paskelbė. Dauguma jų nepriima jokios paramos.",

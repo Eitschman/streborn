@@ -722,6 +722,8 @@
   "share.groups.direct": "Bezpośrednio",
   "credits.title": "Open source i podziękowania",
   "credits.intro": "STR jest oparte na oprogramowaniu open source. Dziękuję projektom, które dołącza, do których linkuje lub na których się opiera:",
+  "credits.ownLicense": "Sam STR jest objęty licencją Apache 2.0. Projekt oparty na STR zachowuje tę informację i używa własnej nazwy.",
+  "credits.licenseLink": "Licencja",
   "credits.by": "autorstwa",
   "credits.researchTitle": "Badania i inżynieria wsteczna",
   "credits.researchIntro": "STR nie zawiera ich kodu, ale kilka jego kluczowych mechanizmów nie istniałoby bez tego, co te projekty opublikowały. Większość z nich nie przyjmuje żadnego wsparcia.",

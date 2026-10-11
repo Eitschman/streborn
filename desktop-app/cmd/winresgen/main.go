@@ -45,7 +45,7 @@ func main() {
 	ver := flag.String("version", "0.0.0.0", "product version, four numbers")
 	company := flag.String("company", "STR (SoundTouch Reborn)", "company name")
 	product := flag.String("product", "ST Reborn", "product name")
-	copyright := flag.String("copyright", "Copyright (c) 2026", "legal copyright")
+	copyright := flag.String("copyright", "Copyright (c) 2026 Jens Roggenfelder", "legal copyright")
 	comments := flag.String("comments", "", "comments")
 	icon := flag.String("icon", "build/windows/icon.ico", "application icon")
 	manifest := flag.String("manifest", "build/windows/wails.exe.manifest", "application manifest")

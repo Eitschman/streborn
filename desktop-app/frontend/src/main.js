@@ -1077,7 +1077,16 @@ function showCredits() {
     + (c.by ? ` <span class="credit-by">${escapeHtml(t('credits.by'))} ${escapeHtml(c.by)}</span>` : '')
     + extra + `</div>`
     + `<div class="credit-role">${escapeHtml(c.role)}</div></div>`;
-  body.innerHTML = OSS_CREDITS.map(c =>
+  // STR's own license comes first. The NOTICE asks every work based on STR to
+  // show this attribution where it shows its other credits, so STR shows it
+  // here itself.
+  const repo = 'https://github.com/JRpersonal/streborn/blob/main';
+  const own = `<div class="credit-own">`
+    + `<div><b>STR (SoundTouch Reborn)</b> <span class="credit-by">&copy; 2026 Jens Roggenfelder</span> <span class="credit-license">Apache-2.0</span></div>`
+    + `<div class="credit-role">${escapeHtml(t('credits.ownLicense'))} `
+    + `<a href="#" class="footer-link credit-name" data-url="${escapeAttr(repo + '/LICENSE')}">${escapeHtml(t('credits.licenseLink'))}</a> &middot; `
+    + `<a href="#" class="footer-link credit-name" data-url="${escapeAttr(repo + '/NOTICE')}">NOTICE</a></div></div>`;
+  body.innerHTML = own + OSS_CREDITS.map(c =>
     row(c, ` <span class="credit-license">${escapeHtml(c.license)}</span>`)
   ).join('')
     + `<h3 class="credit-section">${escapeHtml(t('credits.researchTitle'))}</h3>`
@@ -1142,7 +1151,7 @@ async function renderFooter() {
   $('appFooter').innerHTML = `
     <div class="footer-left">
       ST Reborn &middot; Version <a href="#" id="appVersionLink" class="footer-link" title="${escapeAttr(t('banner.whatsNew'))}"><b>${escapeHtml(i.version)}</b></a>${buildStr}${i.author ? ' &middot; ' + escapeHtml(i.author) : ''}
-      <div class="footer-fine">Independent open source project, donation funded, MIT license.</div>
+      <div class="footer-fine">Independent open source project, donation funded, Apache-2.0 license.</div>
     </div>
     <div class="footer-right">${links.join(' &middot; ')}</div>
   `;

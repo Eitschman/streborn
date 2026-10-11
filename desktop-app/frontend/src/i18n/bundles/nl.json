@@ -722,6 +722,8 @@
   "share.groups.direct": "Direct",
   "credits.title": "Open source en credits",
   "credits.intro": "STR is gebouwd op open source. Dank aan de projecten die het bundelt, ernaar linkt of erop voortbouwt:",
+  "credits.ownLicense": "STR zelf valt onder de Apache License 2.0. Een werk dat op STR is gebaseerd, houdt deze vermelding en gebruikt een eigen naam.",
+  "credits.licenseLink": "Licentie",
   "credits.by": "door",
   "credits.researchTitle": "Onderzoek en reverse engineering",
   "credits.researchIntro": "STR bevat geen code van deze projecten, maar verschillende kernmechanismen zouden niet bestaan zonder wat zij hebben gepubliceerd. De meeste accepteren geen enkele steun.",

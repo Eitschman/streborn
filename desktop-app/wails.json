@@ -13,7 +13,7 @@
   "info": {
     "companyName": "STR (SoundTouch Reborn)",
     "productName": "ST Reborn",
-    "copyright": "Copyright (c) 2026",
+    "copyright": "Copyright (c) 2026 Jens Roggenfelder",
     "comments": "SoundTouch Reborn - local control for Bose SoundTouch speakers after the cloud shutdown. Unofficial, not affiliated with or endorsed by Bose.",
     "productVersion": "0.9.48.0"
   }

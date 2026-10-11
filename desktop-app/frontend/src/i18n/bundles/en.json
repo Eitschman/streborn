@@ -766,6 +766,8 @@
   "share.groups.direct": "Direct",
   "credits.title": "Open source & credits",
   "credits.intro": "STR is built on open source. Thank you to the projects it bundles, links, or builds on:",
+  "credits.ownLicense": "STR itself is licensed under the Apache License 2.0. A work based on STR keeps this notice and uses a name of its own.",
+  "credits.licenseLink": "License",
   "credits.by": "by",
   "credits.researchTitle": "Research and reverse engineering",
   "credits.researchIntro": "STR ships none of their code, but several of its central mechanisms would not exist without what these projects published. Most of them accept no support at all.",

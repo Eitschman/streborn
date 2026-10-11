@@ -338,7 +338,7 @@ flowchart TB
   end
 
   EXT["External at runtime:<br/>gorilla/websocket, grandcat/zeroconf,<br/>miekg/dns, x/net/ipv4, x/sys.<br/>Everything else is the standard library."]
-  GLRP["go-librespot, a separate process:<br/>the fork with the Ogg passthrough patch,<br/>GPL kept at arm's length from the MIT agent"]
+  GLRP["go-librespot, a separate process:<br/>the fork with the Ogg passthrough patch,<br/>GPL kept at arm's length from the Apache-2.0 agent"]
 
   UI --> WAILS
   WAILS --> APPGO
@@ -393,7 +393,7 @@ no build step and no external script tag at all. They call the same
 
 **One process boundary that is not an accident.** go-librespot runs as a
 separate process, controlled over a localhost API. It is GPL-3.0 and the
-agent is MIT, so two binaries keep that clean, and an engine crash does
+agent is Apache-2.0, so two binaries keep that clean, and an engine crash does
 not take the speaker's radio down with it.
 
 ---
@@ -876,7 +876,7 @@ the app. The complete picture of what talks to what:
 | Component | Talks to | What is sent |
 |---|---|---|
 | Speaker (agent + firmware) | **Never** the Bose cloud | STR redirects the Bose cloud hostnames to localhost and answers them itself (marge). The speaker reaches the LAN, the upstream radio CDN (audio, proxied), and, only when the user enables them, Spotify access points (go-librespot) and the user's own configured webhook URLs. Radio search/metadata is no longer fetched by the speaker; the desktop app queries radio-browser.info directly (app-first). |
-| Desktop app | `st-reborn.de` update-check, once at startup | Running version, build stamp, OS, CPU arch, UI locale. No account, no device ID, no personal data. Opt-out: `STR_NO_UPDATE_CHECK=1`. Radio search runs in the app (direct to radio-browser.info); only the audio CDN stream flows through the speaker agent. |
+| Desktop app | `st-reborn.de` update-check, once at startup | Running version, build stamp, OS, CPU arch, UI locale. No account, no device ID, no personal data. Opt-out: `STR_NO_UPDATE_CHECK=1`. The Wishes tab downloads `st-reborn.de/ideas.json` (titles already translated at the website build); nothing is sent with it. Radio search runs in the app (direct to radio-browser.info); only the audio CDN stream flows through the speaker agent. |
 | Desktop app webview | `icons.duckduckgo.com` | Only a radio station's own domain, to fetch its logo when the station ships no usable artwork. No user data, no account, no identifier. When DuckDuckGo also has nothing, a local letter monogram is drawn with no network call. Google's favicon service was deliberately not used. |
 | Website (`st-reborn.de`) | GoatCounter | Privacy-friendly, cookieless page analytics: no cookies, no cross-site tracking, the visitor IP is not stored. |
 
