@@ -14,7 +14,7 @@ import { wingetInstallLabel, wingetOutcomeView, wingetFailureView } from './wing
 import { sourceAccountFrom } from './nowsourceaccount.js';
 import { isNativeServicePreset, nativeServiceLabel, nativeServiceSaveable, nativeServiceBadge, nativeServiceActive } from './nativeservice.js';
 import {
-  acceptSpotifyReply, beginRecall, recallSettled, snapshotFromReply, spotifySongText,
+  acceptSpotifyReply, beginRecall, recallSettled, snapshotFromReply, spotifySlotStillHolds, spotifySongText,
 } from './spotifynowplaying.js';
 import { runConflictCleanup } from './conflictcleanup.js';
 import { speakerReachedTarget, waitForStableAgent } from './agentsettle.js';
@@ -6876,6 +6876,14 @@ function renderPresets() {
   const spotifyPlaying = !!state.nowLocation && /\/spotify\/stream/.test(state.nowLocation);
   if (!spotifyPlaying) state.nowSpotifySlot = null;
   else if (activeSlot !== null) state.nowSpotifySlot = activeSlot;
+  else if (state.nowSpotifySlot != null) {
+    // The Spotify app took over the "(STR)" speaker: same generic location, but
+    // the engine now plays a context the key does not hold (#1077, issue 14).
+    const held = state.presets.find(x => x.slot === state.nowSpotifySlot);
+    if (held && held.type === 'spotify' && !spotifySlotStillHolds(held.uri, state.spotifyNow)) {
+      state.nowSpotifySlot = null;
+    }
+  }
   // If the speaker is playing through the stream proxy, resolve the
   // real stream URL of the source slot. That lets us mark sibling
   // slots with the same station as active too. Otherwise only the
