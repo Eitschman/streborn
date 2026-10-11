@@ -88,6 +88,11 @@ const (
 	// days (2026-09-29). The speaker woke on every attempt and was asleep
 	// again five seconds later, and nothing in STR named the pair.
 	ClassGroupError Class = "group_error" // HSM: EVT_SYSTEM_GROUP_STATE_IN_ERROR
+	// ClassPresetGesture is the system controller's verdict on a preset key,
+	// EVT_KEY_PRESET_PRESS (tap) or EVT_KEY_PRESET_PRESS_AND_HOLD (hold), and
+	// any other EVT_KEY_PRESET_* variant a chassis may log. Ring only: the
+	// hold-to-save code logs its reading of each verdict already (#1217).
+	ClassPresetGesture Class = "preset_gesture" // HSM: EVT_KEY_PRESET_*
 	// Wi-Fi (once a minute on the sm2 chassis; ring only, never the agent log).
 	ClassWiFiStatus  Class = "wifi_status"
 	ClassWiFiQuality Class = "wifi_quality"
@@ -211,6 +216,18 @@ func Classify(l Line) (Class, bool) {
 	// is precisely how a broken group stayed invisible.
 	case strings.Contains(m, "EVT_SYSTEM_GROUP_STATE_IN_ERROR"):
 		return ClassGroupError, true
+	// The firmware's tap/hold verdict on a preset key (presetgesture.go),
+	// every EVT_KEY_PRESET_* variant, so the raw line reaches the bundle
+	// even when the hold-to-save pairing (#1217) makes nothing of it. A
+	// verdict that also carries a standby/wake transition (a key pressed in
+	// standby) keeps that class: the power signal reads it.
+	case strings.Contains(m, "EVT_KEY_PRESET"):
+		if l.Facility == "HSM" && strings.Contains(m, "ChangeState(") {
+			if c, ok := classifyStateChange(m); ok {
+				return c, true
+			}
+		}
+		return ClassPresetGesture, true
 	// The setup gates come BEFORE the ChangeState one on purpose: the
 	// firmware's Wi-Fi state machine logs through the same ChangeState shape,
 	// and that case deliberately drops everything whose facility is not HSM.

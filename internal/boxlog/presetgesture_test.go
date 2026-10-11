@@ -67,3 +67,41 @@ func TestReaderRoutesGestureAndWebKeys(t *testing.T) {
 		t.Fatalf("the key handler and history must stay clean, got %+v", keys)
 	}
 }
+
+// TestPresetGestureLinesReachTheEventRing: both verdicts, and any other
+// EVT_KEY_PRESET variant, are classified preset_gesture and kept in the
+// event ring for box_syslog_events, ring only (#1217). The display line that
+// follows a hold is not one of them.
+func TestPresetGestureLinesReachTheEventRing(t *testing.T) {
+	f := newForensics()
+	now := time.Date(2026, 10, 10, 12, 59, 34, 0, time.UTC)
+	other := `Oct 10 12:59:35 spotty local0.info BoseApp[1943]: [(002164):HSM:INFO]SysCtlr: HandleMessage(EVT_KEY_PRESET_RELEASE) >> On > StdOpOn`
+	for i, line := range []string{lineRhinoPresetHold, lineRhinoPresetTap, other} {
+		ev, logIt, ok := f.observe(line, now.Add(time.Duration(i)*time.Second))
+		if !ok || ev.Class != ClassPresetGesture {
+			t.Fatalf("line %d classified as %q (ok=%v), want %q", i, ev.Class, ok, ClassPresetGesture)
+		}
+		if logIt {
+			t.Fatalf("line %d would reach the NAND-mirrored agent log; preset_gesture is ring only", i)
+		}
+	}
+	if _, _, ok := f.observe(lineRhinoDisplaySet, now); ok {
+		t.Fatal("the display controller's EVT_PRESET_SET_OR_SELECT_STATUS line must stay unclassified")
+	}
+	evs := f.eventsSnapshot()["events"].([]map[string]any)
+	if len(evs) != 3 || evs[0]["class"] != "preset_gesture" ||
+		evs[0]["message"] != "SysCtlr: HandleMessage(EVT_KEY_PRESET_PRESS_AND_HOLD) >> On > StdOpOn" {
+		t.Fatalf("box_syslog_events does not carry the raw verdicts: %+v", evs)
+	}
+}
+
+// TestPresetVerdictFromStandbyStaysAWake: a preset key pressed in standby
+// may carry the wake transition in the same line; the power signal reads
+// that class, so it must win.
+func TestPresetVerdictFromStandbyStaysAWake(t *testing.T) {
+	l := Line{Process: "BoseApp", Facility: "HSM",
+		Message: "SysCtlr: HandleMessage(EVT_KEY_PRESET_PRESS) >> Standby [ChangeState(Standby >> On), Standby(EXIT)] [On(ENTER)]"}
+	if got, ok := Classify(l); !ok || got != ClassWake {
+		t.Fatalf("classified as %q (ok=%v), want %q", got, ok, ClassWake)
+	}
+}

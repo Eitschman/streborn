@@ -53,6 +53,11 @@ const (
 	// holdSaveBudget bounds one save end to end (a now-playing read, the
 	// Spotify title lookup, the box registration).
 	holdSaveBudget = 30 * time.Second
+	// holdUnpairedCheckAfter is when, after a physical preset press, the
+	// saver looks back once and says so if no hold verdict was paired with
+	// it (#1217: a reporter's held key left no hold-to-save line at all).
+	// The pair window plus a margin for a verdict read late.
+	holdUnpairedCheckAfter = holdPairWindow + 500*time.Millisecond
 )
 
 // holdSaveFunc stores what STR plays on a slot (webui.Server.HoldSaveLive).
@@ -65,6 +70,9 @@ type holdPress struct {
 	origin   boxlog.Origin
 	at       time.Time
 	used     bool
+	// seq numbers the presses so the unpaired check can tell whether the
+	// press it was armed for is still the newest one.
+	seq uint64
 }
 
 // holdSaver pairs preset presses with the firmware's hold verdict and saves
@@ -77,6 +85,9 @@ type holdSaver struct {
 	// spawn runs the confirmation and save off the log reader's goroutine.
 	// Tests run it inline.
 	spawn func(func())
+	// after runs f once after d (time.AfterFunc): the one-shot unpaired
+	// check of a physical press. Tests fire it by hand.
+	after func(d time.Duration, f func())
 	// acceptAppUntil (unix nanos) is the test-only switch that lets a key
 	// sent over :8090/key count like a physical one; 0 = off.
 	acceptAppUntil atomic.Int64
@@ -85,6 +96,12 @@ type holdSaver struct {
 	press  holdPress
 	hold   time.Time // a hold verdict no press has been paired with yet
 	vetoAt time.Time // newest tap verdict or preset activation
+	// pressSeq counts preset presses (holdPress.seq).
+	pressSeq uint64
+	// verdictAt / verdictHold describe the newest tap/hold verdict, whatever
+	// became of it, for the forensic lines.
+	verdictAt   time.Time
+	verdictHold bool
 }
 
 func newHoldSaver(logger *slog.Logger, save holdSaveFunc) *holdSaver {
@@ -97,6 +114,7 @@ func newHoldSaver(logger *slog.Logger, save holdSaveFunc) *holdSaver {
 		now:    time.Now,
 		sleep:  time.Sleep,
 		spawn:  func(f func()) { go f() },
+		after:  func(d time.Duration, f func()) { time.AfterFunc(d, f) },
 	}
 }
 
@@ -117,6 +135,8 @@ func (h *holdSaver) NotePress(ev boxlog.KeyEvent) {
 	}
 	p := holdPress{slot: slot, producer: ev.Producer, origin: ev.Origin, at: ev.At}
 	h.mu.Lock()
+	h.pressSeq++
+	p.seq = h.pressSeq
 	hold := h.hold
 	if !hold.IsZero() && ev.At.Sub(hold) < holdPairWindow {
 		// The verdict was read first; this press line trails it.
@@ -129,27 +149,75 @@ func (h *holdSaver) NotePress(ev boxlog.KeyEvent) {
 	}
 	h.press = p
 	h.mu.Unlock()
+	if p.producer.Physical() && h.after != nil {
+		// One timer per human press, so bounded by how fast a person
+		// presses; it only reads state and logs.
+		h.after(holdUnpairedCheckAfter, func() { h.checkUnpaired(p) })
+	}
 }
 
-// NoteGesture receives the firmware's tap/hold verdict on a preset key.
+// checkUnpaired is the one-shot look back after a physical preset press: if
+// no hold verdict was paired with it, say so, together with the newest
+// verdict and how it relates to the press (#1217). Every tap ends here too,
+// which is expected (a tap gets a tap verdict, never a hold one); a held key
+// ending here is the case the line exists for.
+func (h *holdSaver) checkUnpaired(p holdPress) {
+	h.mu.Lock()
+	cur := h.press
+	verdictAt, verdictHold := h.verdictAt, h.verdictHold
+	unclaimed := !h.hold.IsZero()
+	h.mu.Unlock()
+	if cur.seq == p.seq && cur.used {
+		return
+	}
+	verdict, afterPressMs, ageMs := "none", int64(0), int64(-1)
+	if !verdictAt.IsZero() {
+		verdict = "tap"
+		if verdictHold {
+			verdict = "hold"
+		}
+		afterPressMs = verdictAt.Sub(p.at).Milliseconds()
+		ageMs = h.now().Sub(verdictAt).Milliseconds()
+	}
+	h.logger.Info("hold-to-save: no hold verdict paired",
+		"slot", p.slot, "producer", p.producer.String(), "origin", string(p.origin),
+		"superseded", cur.seq != p.seq,
+		"lastVerdict", verdict, "lastVerdictAgeMs", ageMs,
+		"lastVerdictAfterPressMs", afterPressMs, "unclaimedHold", unclaimed)
+}
+
+// NoteGesture receives the firmware's tap/hold verdict on a preset key. Each
+// verdict is logged at INFO: it only follows a human gesture or a key sent
+// over :8090/key, so the line is bounded, and #1217 showed a held key that
+// otherwise left no trace at all.
 func (h *holdSaver) NoteGesture(g boxlog.PresetGesture) {
 	h.mu.Lock()
+	h.verdictAt, h.verdictHold = g.At, g.Hold
+	p := h.press
+	slot, ageMs := 0, int64(-1)
+	if p.slot != 0 {
+		slot, ageMs = p.slot, g.At.Sub(p.at).Milliseconds()
+	}
 	if !g.Hold {
 		h.vetoAt = g.At
 		h.hold = time.Time{}
 		h.mu.Unlock()
+		h.logger.Info("hold-to-save: the speaker read a preset key as a tap",
+			"hold", false, "pressSlot", slot, "pressAgeMs", ageMs, "pressUsed", p.used)
 		return
 	}
-	p := h.press
 	if p.slot != 0 && !p.used && !g.At.Before(p.at) && g.At.Sub(p.at) < holdPairWindow {
 		h.press.used = true
 		h.mu.Unlock()
+		h.logger.Info("hold-to-save: the speaker read a preset key as a hold",
+			"hold", true, "pressSlot", slot, "pressAgeMs", ageMs, "paired", true)
 		h.paired(p, g.At)
 		return
 	}
 	h.hold = g.At
 	h.mu.Unlock()
-	h.logger.Debug("hold-to-save: the speaker reported a held preset key before the key line named it")
+	h.logger.Info("hold-to-save: the speaker reported a held preset key, no press to pair it with",
+		"hold", true, "pressSlot", slot, "pressAgeMs", ageMs, "pressUsed", p.used)
 }
 
 // NoteSelection records a preset activation the speaker announced (a tap's
