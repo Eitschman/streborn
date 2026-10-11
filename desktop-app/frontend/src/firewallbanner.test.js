@@ -37,6 +37,14 @@ describe('firewallBannerView', () => {
   it('comes back when an install waited in vain, even with speakers found', () => {
     expect(firewallBannerView(blocked, t, { speakersFound: true, installSuspect: true })).not.toBeNull();
   });
+
+  // #1215 again: the start-up check ran before the first sweep came back and
+  // read its not-yet-filled list as "no speakers".
+  it('waits for the first discovery sweep before it shows', () => {
+    expect(firewallBannerView(blocked, t, { discoveryPending: true })).toBeNull();
+    expect(firewallBannerView(blocked, t, { discoveryPending: false })).not.toBeNull();
+    expect(firewallBannerView(blocked, t, { discoveryPending: true, installSuspect: true })).not.toBeNull();
+  });
 });
 
 describe('firewallUnblockToast', () => {

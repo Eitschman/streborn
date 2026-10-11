@@ -2310,6 +2310,11 @@ async function discoverBoxes() {
   } finally {
     const rb = $('refreshBtn');
     if (rb) rb.classList.remove('spinning');
+    // Failed or not, the first sweep is over: from here an empty list counts.
+    if (!firewallFirstSweepDone) {
+      firewallFirstSweepDone = true;
+      renderFirewallBanner();
+    }
   }
 }
 
@@ -2756,6 +2761,9 @@ let firewallDismissed = false;
 // shows (firewallbanner.js, #1215).
 let firewallSpeakersFound = false;
 let firewallInstallSuspect = false;
+// False until the first discovery sweep returns, so the start-up check cannot
+// read the empty list of a sweep still in progress as "nothing found".
+let firewallFirstSweepDone = false;
 let firewallBusy = false;
 const firewallSuspect = firewallSuspectGate();
 
@@ -2773,6 +2781,7 @@ function renderFirewallBanner() {
     dismissed: firewallDismissed,
     speakersFound: firewallSpeakersFound,
     installSuspect: firewallInstallSuspect,
+    discoveryPending: !firewallFirstSweepDone,
   });
   if (!v) { el.classList.add('hidden'); el.innerHTML = ''; return; }
   const btn = (b, id, cls) => `<button class="btn ${cls} app-update-btn" id="${id}"${firewallBusy ? ' disabled' : ''}>${escapeHtml(firewallBusy && cls === 'btn-primary' ? t('firewall.working') : b.label)}</button>`;
