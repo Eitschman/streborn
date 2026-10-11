@@ -207,8 +207,10 @@ The power-button variant goes to the speaker's own Bose API and behaves like
 the button: it switches on when the speaker is off and off when it is on.
 When you simulate a preset key that way (`PRESET_1` to `PRESET_6`), send a
 second request with `state="release"` right after the `press`, or the speaker
-reads it as a long press and stores the current station on that key. The STR
-route `/api/play/<slot>` needs neither.
+reads it as a long press and stores the current station on that key. The same
+goes for `VOLUME_UP` and `VOLUME_DOWN`, and there a missing release is louder:
+the speaker holds the key down and keeps turning the volume up. The STR
+routes `/api/play/<slot>` and `/api/box/volume` need no release at all.
 
 Shortcuts made on the iPhone show up on a paired Apple Watch on their own.
 Give the speaker a fixed address in your router, or the shortcuts stop working
