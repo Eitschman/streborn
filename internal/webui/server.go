@@ -446,6 +446,15 @@ type Server struct {
 	// the box got double SetURI+Play (two audible re-buffers) and a third
 	// goroutine could stack. One latch per Server survives the struct swap.
 	rePushInFlight bool
+	// stuckBufRescueAt is when the stuck-buffering rescue (spotify_stuck_
+	// buffer.go) last acted, guarded by lastPlayMu. One rescue per episode:
+	// only a user play newer than this opens the next one.
+	stuckBufRescueAt time.Time
+	// stuckBufWait overrides the rescue's two waits for tests (0 = real).
+	stuckBufWait time.Duration
+	// playStateDetailFn overrides boxPlayStateDetail for tests. nil = the
+	// real :8090 probe (or playStateFn when only that one is set).
+	playStateDetailFn func() (standby, busy, buffering bool)
 	// recallGen counts every stream push recorded via setLastPlay. Each
 	// recall's verify loop captures the generation of its own play; any later
 	// play bumps it, telling the older verify it was superseded so it stands
