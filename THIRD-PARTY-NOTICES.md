@@ -1,7 +1,8 @@
 # Third-party notices
 
-STR is licensed under the terms in [LICENSE](LICENSE). It distributes the
-components below, each under its own licence.
+STR is licensed under the Apache License 2.0 ([LICENSE](LICENSE)), with the
+attribution notice in [NOTICE](NOTICE). It distributes the components below,
+each under its own licence.
 
 This file covers what is **distributed**: the bundled Spotify engine, the
 certificate store, and the libraries linked into the released binaries. Build

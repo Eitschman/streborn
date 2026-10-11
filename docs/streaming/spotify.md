@@ -447,13 +447,13 @@ This is the UX the goal asks for, and it is implemented by the open
 
 ### Licensing (decisive)
 
-STR is MIT. **go-librespot is GPL-3.0, so its Go packages must never be
+STR is Apache-2.0 (MIT up to v1.0.12). **go-librespot is GPL-3.0, so its Go packages must never be
 imported/linked into STR's Go code** (that would force STR to GPL).
 Either implementation may only be used as a **separate sidecar binary**
 invoked over a process boundary (exec + its HTTP API / pipe), which is
 mere aggregation, not a derivative work. STR uses go-librespot exactly
 this way: it execs the binary and talks to it over localhost HTTP, never
-importing its packages, so STR stays MIT. Shipping a GPL-3.0 binary
+importing its packages, so STR stays Apache-2.0. Shipping a GPL-3.0 binary
 obliges us to offer its source; it is public and the build is pinned +
 Sigstore-attested (`go-librespot.yml`). See the Decision update at the
 top: go-librespot is chosen for its local control API; librespot-org

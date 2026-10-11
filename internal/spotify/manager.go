@@ -13,7 +13,7 @@
 //     credential, no token plane. See Play below.
 //   - GPL-3.0 is fine here: go-librespot runs as a separate sidecar
 //     process (exec + localhost HTTP). STR merely aggregates it; the
-//     agent stays MIT. The binary is built, attested, audited and
+//     agent stays Apache-2.0. The binary is built, attested, audited and
 //     credited separately.
 //
 // Audio shape:

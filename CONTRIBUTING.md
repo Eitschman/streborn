@@ -127,7 +127,7 @@ feature so the work lands rather than stalls.
 
 - **A third-party streaming engine is a sidecar, not embedded code.** STR
   drives Spotify through go-librespot as a separate process over a localhost
-  HTTP API and merely aggregates it: the agent stays MIT, and the engine is
+  HTTP API and merely aggregates it: the agent stays Apache-2.0, and the engine is
   built, attested, and licensed on its own. A new service that needs a
   reimplemented client (SiriusXM, Amazon, YouTube, ...) belongs in its own
   repository the same way, with STR talking to it over a small local API, not
@@ -165,9 +165,10 @@ Tick these in your PR description:
 
 ## Licensing
 
-STR is MIT licensed. By submitting a contribution, you agree to
-license it under the same terms. The full text is in
-[`LICENSE`](LICENSE).
+STR is licensed under the Apache License 2.0 (releases up to v1.0.12
+were MIT). By submitting a contribution, you agree to license it under
+the same terms. The full text is in [`LICENSE`](LICENSE); the
+attribution every derived work must keep is in [`NOTICE`](NOTICE).
 
 ## Conduct
 
