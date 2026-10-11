@@ -181,6 +181,41 @@ curl -s -X POST "$BOX/api/play" -d '{"url":"https://example.com/stream.mp3"}'
 curl -s -X POST "$BOX/api/box/power" -d '{"on":false}'
 ```
 
+## Apple Shortcuts and Apple Watch
+
+A shortcut in Apple's Shortcuts app is enough to control a speaker from the
+iPhone, the home screen or an Apple Watch, with no extra app. A user shared
+the setup in discussion #1224 (iOS 27, a first-generation SoundTouch 20).
+
+Each shortcut is two actions:
+
+1. **Text**, holding the request body.
+2. **Get Contents of URL** (German: "Inhalte von URL abrufen"), with the
+   method set to `POST` (`PUT` for the volume), the request body set to `Text` (or `JSON`), and the
+   Text from step 1 as its content.
+
+What to put in them:
+
+| Shortcut | URL | Body |
+|---|---|---|
+| Play preset 1 | `http://<speaker-ip>:8888/api/play/1` | none |
+| Power on / standby | `http://<speaker-ip>:8888/api/box/power` | `{"on":true}` / `{"on":false}` |
+| Volume to 20 | `http://<speaker-ip>:8888/api/box/volume` | `{"value":20}` |
+| Power button (toggles) | `http://<speaker-ip>:8090/key` | `<key state="press" sender="Gabbo">POWER</key>` |
+
+The power-button variant goes to the speaker's own Bose API and behaves like
+the button: it switches on when the speaker is off and off when it is on.
+When you simulate a preset key that way (`PRESET_1` to `PRESET_6`), send a
+second request with `state="release"` right after the `press`, or the speaker
+reads it as a long press and stores the current station on that key. The same
+goes for `VOLUME_UP` and `VOLUME_DOWN`, and there a missing release is louder:
+the speaker holds the key down and keeps turning the volume up. The STR
+routes `/api/play/<slot>` and `/api/box/volume` need no release at all.
+
+Shortcuts made on the iPhone show up on a paired Apple Watch on their own.
+Give the speaker a fixed address in your router, or the shortcuts stop working
+when it gets a new one.
+
 ## The speaker's own Bose API still works
 
 STR does not block the speaker's native Bose HTTP API on port **8090**, so
