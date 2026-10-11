@@ -18,9 +18,14 @@
 // machine where the user may not change the firewall at all (#1215). It stays
 // up when an install waited in vain for the speaker's callback (installSuspect),
 // because inbound connections are exactly what such a rule stops.
-export function firewallBannerView(status, t, { dismissed = false, speakersFound = false, installSuspect = false } = {}) {
+//
+// Until the first discovery sweep has come back (discoveryPending) "no speakers
+// yet" is not "no speakers": that sweep takes about 16 s, and the banner used to
+// show in that window on every start, then vanish (#1215, still seen on v1.0.12).
+export function firewallBannerView(status, t, { dismissed = false, speakersFound = false, installSuspect = false, discoveryPending = false } = {}) {
   if (dismissed || !status || !status.supported || !status.checked || !status.blocked) return null;
   if (speakersFound && !installSuspect) return null;
+  if (discoveryPending && !installSuspect) return null;
   const view = {
     title: t('firewall.bannerTitle'),
     text: t('firewall.bannerText'),
