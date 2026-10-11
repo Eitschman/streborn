@@ -1069,6 +1069,7 @@ export namespace main {
 	    title: string;
 	    url: string;
 	    votes: number;
+	    titles?: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new Wish(source);
@@ -1080,6 +1081,7 @@ export namespace main {
 	        this.title = source["title"];
 	        this.url = source["url"];
 	        this.votes = source["votes"];
+	        this.titles = source["titles"];
 	    }
 	}
 	export class WishList {

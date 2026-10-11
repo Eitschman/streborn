@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('./api.js', () => ({ BrowserOpenURL: () => {}, FeatureWishes: async () => null }));
 
-const { wishesHTML } = await import('./views/wishes.js');
+const { wishesHTML, wishTitle } = await import('./views/wishes.js');
 
 const tr = (k, p) => (p ? `${k}:${JSON.stringify(p)}` : k);
 const LIST = {
@@ -46,5 +46,29 @@ describe('wishesHTML', () => {
 
   it('says so when there are no open wishes', () => {
     expect(wishesHTML({ ...LIST, wishes: [] }, tr, 'en')).toContain('wishes.empty');
+  });
+});
+
+// The website translates the titles at build time; the tab picks the app's
+// language and falls back to the English original.
+describe('wishTitle', () => {
+  const w = { title: 'Clock on the display while streaming', titles: { de: 'Uhr auf dem Display beim Streamen', 'zh-tw': '串流時在螢幕上顯示時鐘' } };
+
+  it('shows the title in the app language', () => {
+    expect(wishTitle(w, 'de')).toBe('Uhr auf dem Display beim Streamen');
+  });
+
+  it('maps the app zh-Hant to the site zh-tw', () => {
+    expect(wishTitle(w, 'zh-Hant')).toBe('串流時在螢幕上顯示時鐘');
+  });
+
+  it('falls back to English when a language is missing or the list is old', () => {
+    expect(wishTitle(w, 'fr')).toBe(w.title);
+    expect(wishTitle({ title: 'X' }, 'de')).toBe('X');
+  });
+
+  it('is what the rows render', () => {
+    const html = wishesHTML({ ok: true, wishes: [{ ...w, url: 'https://x', votes: 8 }] }, (k) => k, 'de');
+    expect(html).toContain('Uhr auf dem Display beim Streamen');
   });
 });
