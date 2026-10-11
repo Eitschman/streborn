@@ -285,6 +285,7 @@ import {
   queueReplyMerge,
   agentCurrentEngineMissing,
   searchErrorText,
+  stormBannerBoxes,
   STEREO_ICON,
   GROUP_ICON,
 } from './utils.js';
@@ -2841,7 +2842,9 @@ function checkBoxIssueBanner() {
   // Finding 4). Saying so at the moment it happens is the whole point.
   // recallRefusal is the storm's quiet sibling (no 1036 ever fires, the box
   // just drops its source for every recall); same remedy, same banner.
-  const storm = boxes.filter(b => b && (b.storm1036 || b.recallRefusal));
+  // A wedged speaker is excluded: it already has the "unplug it" banner, and
+  // a restart notice beside it contradicted that (#1065).
+  const storm = stormBannerBoxes(boxes);
   // A thumbs-key press the speaker refused. Not dismissible and worth its own
   // line: the press produced NOTHING visible before this, so two owners spent
   // days re-saving a group that was never the problem (2026-09-26). The

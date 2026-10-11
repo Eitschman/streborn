@@ -450,6 +450,15 @@ export function searchErrorText(err) {
   return `${t('common.error')}: ${raw}`;
 }
 
+// stormBannerBoxes picks the speakers the soft-restart notice (Bose 1036 storm
+// or silent recall refusal) is about. A speaker whose health check says it is
+// wedged already gets the "unplug it" banner; a restart notice next to it
+// gave two contradicting pieces of advice for the same speaker (#1065), and a
+// wedged box cannot run the soft restart anyway. So it is left out here.
+export function stormBannerBoxes(boxes) {
+  return (boxes || []).filter(b => b && (b.storm1036 || b.recallRefusal) && b.boxHealth !== 'wedged');
+}
+
 export function showError(msg) {
   wireError();
   const m = $('errorModal');
