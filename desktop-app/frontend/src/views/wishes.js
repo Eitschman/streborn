@@ -17,10 +17,24 @@ const SUGGEST_URL = 'https://github.com/JRpersonal/streborn/discussions/new?cate
 
 let cached = null;
 
+// The website translates each title once per build into its own languages
+// (titles: { de, fr, 'zh-tw', ... }); the app reads them from the same
+// ideas.json, so no translation service is ever contacted from here. The app's
+// zh-Hant is the site's zh-tw. A missing language falls back to the English
+// original.
+const SITE_LANG = { 'zh-Hant': 'zh-tw' };
+
+export function wishTitle(w, lang) {
+  const titles = (w && w.titles) || {};
+  const key = SITE_LANG[lang] || String(lang || '').toLowerCase();
+  const tr = typeof titles[key] === 'string' ? titles[key].trim() : '';
+  return tr || (w && w.title) || '';
+}
+
 export function initWishesView() {}
 
 // wishesHTML builds the tab body. Pure, so it is testable without a DOM.
-// list: { ok, updatedAt, voteUrl, suggestUrl, wishes: [{ number, title, url, votes }] }
+// list: { ok, updatedAt, voteUrl, suggestUrl, wishes: [{ number, title, titles, url, votes }] }
 // or null while loading.
 export function wishesHTML(list, tr, lang) {
   const head = `
@@ -38,7 +52,7 @@ export function wishesHTML(list, tr, lang) {
   const rows = wishes.map((w) => `
       <li class="wish-row">
         <span class="wish-votes" title="${escapeAttr(tr('wishes.votesTitle', { count: w.votes }))}"><span class="wish-arrow" aria-hidden="true">&#9650;</span>${escapeHtml(String(w.votes))}</span>
-        <span class="wish-title">${escapeHtml(w.title)}</span>
+        <span class="wish-title">${escapeHtml(wishTitle(w, lang))}</span>
         <button class="btn btn-mini btn-secondary" data-wish-open="${escapeAttr(w.url)}">${escapeHtml(tr('wishes.voteBtn'))}</button>
       </li>`).join('');
   let asOf = '';

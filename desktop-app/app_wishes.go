@@ -32,6 +32,10 @@ type Wish struct {
 	Title  string `json:"title"`
 	URL    string `json:"url"`
 	Votes  int    `json:"votes"`
+	// Titles holds the website's build-time translations, language code to
+	// title (see the website's lib/translate.ts). The app never contacts a
+	// translation service itself; a missing language shows Title.
+	Titles map[string]string `json:"titles,omitempty"`
 }
 
 // WishList is what the Wishes tab renders. OK is false when the list could not

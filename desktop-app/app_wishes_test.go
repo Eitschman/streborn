@@ -45,3 +45,14 @@ func TestParseWishesBrokenJSONKeepsTheButtons(t *testing.T) {
 		t.Fatalf("want the fallback links and an empty list, got %+v", got)
 	}
 }
+
+func TestParseWishesKeepsTranslatedTitles(t *testing.T) {
+	in := `{"ideas":[{"number":1098,"title":"Clock on the display while streaming","url":"https://github.com/JRpersonal/streborn/discussions/1098","votes":8,"titles":{"de":"Uhr auf dem Display beim Streamen"}}]}`
+	got, err := parseWishes(strings.NewReader(in))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Wishes) != 1 || got.Wishes[0].Titles["de"] != "Uhr auf dem Display beim Streamen" {
+		t.Fatalf("want the German title carried through, got %+v", got.Wishes)
+	}
+}
