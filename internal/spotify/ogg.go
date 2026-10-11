@@ -93,6 +93,7 @@ func oggGranule(page []byte) int64 {
 }
 
 func (m *Manager) forward(sink io.Writer, p []byte) {
+	lifted := false
 	if _, err := sink.Write(p); err != nil {
 		m.mu.Lock()
 		if m.sink == sink {
@@ -111,9 +112,15 @@ func (m *Manager) forward(sink io.Writer, p []byte) {
 		// the moment the box can actually start decoding.
 		if m.sinkFirstAudioAt.IsZero() && oggGranule(p) > 0 {
 			m.sinkFirstAudioAt = now
+			// The box is taking audio again: the no-audio activation guard
+			// (idleguard.go) starts over.
+			lifted = m.noteAudioDeliveredLocked()
 		}
 	}
 	m.mu.Unlock()
+	if lifted {
+		m.logger.Info("spotify: the speaker is taking audio again, the no-audio guard is lifted")
+	}
 	if f, ok := sink.(http.Flusher); ok {
 		f.Flush()
 	}

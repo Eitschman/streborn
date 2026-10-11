@@ -89,3 +89,30 @@ func (s *skipStormLimiter) summaryLocked() {
 		"suppressed", s.suppressed, "runLines", s.run)
 	s.suppressed = 0
 }
+
+// lineLimiter lets one log line through per window and counts the ones it
+// held back, so the next line that goes out can say how many were skipped.
+// The zero value is ready to use and safe for concurrent use. Used for lines
+// that a misbehaving speaker can make the agent repeat in a tight loop (#1065:
+// the per-track boundary line while the engine raced through tracks with no
+// box attached); the first line of a burst always goes out, so the cause stays
+// visible in the NAND log tail.
+type lineLimiter struct {
+	mu         sync.Mutex
+	last       time.Time
+	suppressed int
+}
+
+// allow reports whether a line is due at now, and how many lines were held
+// back since the last one that was let through.
+func (l *lineLimiter) allow(now time.Time, window time.Duration) (ok bool, suppressed int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if !l.last.IsZero() && now.Sub(l.last) < window {
+		l.suppressed++
+		return false, 0
+	}
+	l.last = now
+	suppressed, l.suppressed = l.suppressed, 0
+	return true, suppressed
+}

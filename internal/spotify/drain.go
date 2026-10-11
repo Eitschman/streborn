@@ -68,6 +68,17 @@ type oggDrain struct {
 	// from the real start of the track, which it must deliver in full.
 	stageBuf   [][]byte
 	stageBytes int
+	// No-sink pacing (paceWithoutSink): the anchor of the realtime clock
+	// for pages discarded while no box is attached, and the track the
+	// discard is allowed to race through while a skip/recall cut is armed.
+	// now and sleep are the clock, a seam for tests.
+	idleBaseGran  int64
+	idleBaseAt    time.Time
+	idleAnchored  bool
+	idleRacing    bool
+	idleRaceTrack int
+	now           func() time.Time
+	sleep         func(time.Duration)
 }
 
 // newOggDrain returns the drain state for one go-librespot run. flushBytes is
@@ -84,7 +95,7 @@ func (m *Manager) newOggDrain(flushBytes int, leadCapSec float64, chain *oggChai
 	base := m.deliveredGran
 	m.mu.Unlock()
 	return &oggDrain{m: m, flushBytes: flushBytes, leadCapSec: leadCapSec, chain: chain,
-		pendingSince: time.Now(), deliveredBase: base}
+		pendingSince: time.Now(), deliveredBase: base, now: time.Now, sleep: time.Sleep}
 }
 
 // noteDelivered extends the delivered timeline by audio that is actually being
@@ -204,9 +215,23 @@ func (d *oggDrain) pageNow(ctx context.Context, page []byte) {
 		// New logical stream = track boundary. Log it with the previous
 		// track's size so a premature/duplicate BOS (the suspected cause of
 		// a track restarting at its start) is visible in the log.
-		m.logger.Info("spotify: track boundary (BOS)",
-			"track", d.trackNum+1, "prevTrackKB", d.trackBody/1024,
-			"prevMaxGran", d.maxGran, "forwardedKB", d.forwarded/1024)
+		// With no box attached the line is rate-limited: a speaker that
+		// stopped fetching once let the engine log one of these every few
+		// seconds, which flushed the 32 KB NAND log tail (#1065). With a box
+		// attached it stays one line per real track.
+		m.mu.Lock()
+		attached := m.sink != nil
+		m.mu.Unlock()
+		logIt, held := true, 0
+		if !attached {
+			logIt, held = m.bosLineLimit.allow(d.now(), noSinkBOSLineWindow)
+		}
+		if logIt {
+			m.logger.Info("spotify: track boundary (BOS)",
+				"track", d.trackNum+1, "prevTrackKB", d.trackBody/1024,
+				"prevMaxGran", d.maxGran, "forwardedKB", d.forwarded/1024,
+				"boxAttached", attached, "linesHeldBack", held)
+		}
 		// App-skip detector: a boundary that cuts the previous track
 		// clearly short, with no STR skip or recall cut armed, came from
 		// the Spotify app itself; re-point the box so it drops the old
@@ -280,6 +305,7 @@ func (d *oggDrain) pageNow(ctx context.Context, page []byte) {
 
 	if sink != nil {
 		d.paused = false
+		d.idleAnchored, d.idleRacing = false, false // next no-sink stretch anchors fresh
 		// Track-boundary flush: a new BOS is a new logical Vorbis stream
 		// (the box must reload codebooks). If the BOS is buried mid-batch
 		// behind the previous track's tail, the box re-inits on a partial
@@ -435,6 +461,97 @@ func (d *oggDrain) pageNow(ctx context.Context, page []byte) {
 		cancel()
 		d.paused = true
 	}
+	// Whether hot or not, never discard faster than the music plays.
+	if gran > 0 {
+		d.paceWithoutSink(ctx, d.granOffset+gran)
+	}
+}
+
+// No-sink pacing tunables. noSinkLeadSec is how far ahead of wall clock the
+// discard may run, noSinkResyncSec how far behind it may fall (an engine that
+// stalled on the CDN) before the clock is re-anchored instead of letting the
+// discard burst to catch up, noSinkPaceStep the longest single sleep so a box
+// that attaches mid-wait is served within a quarter second.
+const (
+	noSinkLeadSec       = 1.0
+	noSinkResyncSec     = 2.0
+	noSinkPaceStep      = 250 * time.Millisecond
+	noSinkBOSLineWindow = 30 * time.Second
+)
+
+// paceWithoutSink holds a page that has no box to go to until its position on
+// the continuous timeline is due on the wall clock.
+//
+// Why pacing and not "pause after ~10 s without a sink": the engine is kept hot
+// with no sink (engineHot) because a hardware preset press makes the box flap
+// its source for several seconds and then attach, and a paused engine at that
+// moment was stranded and never played (PR #454). The flap regularly takes about
+// ten seconds (live .79 2026-07-24), so a 10 s pause timer would cut into
+// exactly the window keep-hot exists for, and a shorter one brings the strand
+// back. Pacing keeps the engine live and its position current for the whole
+// window, so the box still gets audio the instant it attaches, while a box that
+// never attaches costs no more than normal listening: one track per track
+// length instead of one every ~5 s. Discarding at wire speed was the #1065
+// storm: go-librespot ran through a whole track every ~5 s with nothing
+// listening, Spotify refused the audio keys ("failed retrieving aes key") and
+// answered 429 for the account for over ten minutes.
+//
+// The one exception is the stale tail a skip or recall cut is waiting to drop
+// (skipCutArmed): with a box attached those pages are dropped outright to reach
+// the new track sooner, and pacing them here would delay the recalled track by
+// the same amount. The race is limited to the track that was playing when the
+// cut was seen; the next track boundary ends it.
+func (d *oggDrain) paceWithoutSink(ctx context.Context, timeline int64) {
+	m := d.m
+	if m.skipCutArmed() {
+		if !d.idleRacing {
+			d.idleRacing, d.idleRaceTrack = true, d.trackNum
+		}
+		if d.trackNum == d.idleRaceTrack {
+			d.idleAnchored = false
+			return
+		}
+	} else {
+		d.idleRacing = false
+	}
+	now := d.now()
+	if !d.idleAnchored {
+		d.idleBaseGran, d.idleBaseAt, d.idleAnchored = timeline, now, true
+		return
+	}
+	for {
+		wait := noSinkWait(timeline-d.idleBaseGran, now.Sub(d.idleBaseAt))
+		if wait < 0 { // fell behind: start the clock over, no catch-up burst
+			d.idleBaseGran, d.idleBaseAt = timeline, now
+			return
+		}
+		if wait == 0 || ctx.Err() != nil {
+			return
+		}
+		d.sleep(min(wait, noSinkPaceStep))
+		m.mu.Lock()
+		attached := m.sink != nil
+		m.mu.Unlock()
+		if attached {
+			return // a box arrived: the next page goes to it at once
+		}
+		now = d.now()
+	}
+}
+
+// noSinkWait is the pacing decision for a page that is produced granules into
+// the current no-sink stretch, elapsed after it started: 0 means discard it now,
+// a positive duration means hold it that long, a negative one means the engine
+// fell more than noSinkResyncSec behind and the clock should be re-anchored.
+func noSinkWait(produced int64, elapsed time.Duration) time.Duration {
+	ahead := float64(produced)/float64(vorbisRate) - elapsed.Seconds()
+	switch {
+	case ahead < -noSinkResyncSec:
+		return -1
+	case ahead <= noSinkLeadSec:
+		return 0
+	}
+	return time.Duration((ahead - noSinkLeadSec) * float64(time.Second))
 }
 
 // finish runs when the engine's output ends: a seam still waiting for its
