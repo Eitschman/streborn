@@ -8,6 +8,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -75,6 +77,7 @@ func (a *App) RadioSearch(o RadioSearchOpts) ([]radiobrowser.Station, error) {
 	opts := searchOptsFrom(o)
 	if !o.Top && o.Q != "" {
 		st, err := radioClient.SearchSmart(ctx, opts)
+		logRadioErr("search", err)
 		// Borrow a logo from a sibling result for the same station so a
 		// vote-leading entry with an empty favicon (e.g. Couleur 3) still shows
 		// one. Runs before the frontend renders AND saves from the list, so a
@@ -82,6 +85,7 @@ func (a *App) RadioSearch(o RadioSearchOpts) ([]radiobrowser.Station, error) {
 		return radiobrowser.EnrichSiblingLogos(nonNilStations(st)), err
 	}
 	st, err := radioClient.Search(ctx, opts)
+	logRadioErr("top list", err)
 	return radiobrowser.EnrichSiblingLogos(nonNilStations(st)), err
 }
 
@@ -102,6 +106,7 @@ func (a *App) RadioSearchDetailed(o RadioSearchOpts) (RadioSearchResult, error) 
 	ctx, cancel := a.radioCtx()
 	defer cancel()
 	res, err := radioClient.SearchDetailed(ctx, searchOptsFrom(o))
+	logRadioErr("search", err)
 	return RadioSearchResult{
 		Stations: radiobrowser.EnrichSiblingLogos(nonNilStations(res.Stations)),
 		Relaxed:  res.Relaxed,
@@ -118,6 +123,7 @@ func (a *App) RadioStationsByURL(streamURL string) ([]radiobrowser.Station, erro
 	ctx, cancel := a.radioCtx()
 	defer cancel()
 	st, err := radioClient.ByURL(ctx, streamURL)
+	logRadioErr("lookup by stream URL", err)
 	return nonNilStations(st), err
 }
 
@@ -126,6 +132,7 @@ func (a *App) RadioTags(limit int) ([]radiobrowser.Tag, error) {
 	ctx, cancel := a.radioCtx()
 	defer cancel()
 	t, err := radioClient.TopTags(ctx, limit)
+	logRadioErr("tags", err)
 	if t == nil {
 		t = []radiobrowser.Tag{}
 	}
@@ -146,6 +153,7 @@ func (a *App) RadioLanguages(country string, limit int) ([]radiobrowser.Language
 	} else {
 		l, err = radioClient.Languages(ctx, limit)
 	}
+	logRadioErr("languages", err)
 	if l == nil {
 		l = []radiobrowser.Language{}
 	}
@@ -164,6 +172,18 @@ func (a *App) RadioClick(uuid string) error {
 	ctx, cancel := a.radioCtx()
 	defer cancel()
 	return radioClient.Click(ctx, uuid)
+}
+
+// logRadioErr records a failed station-directory request. The frontend shows
+// only a friendly sentence for a directory outage and drops the raw mirror
+// detail, so without this line a diagnostic bundle had no trace of which
+// mirrors failed and how (#1065). A request the app itself abandoned (a newer
+// search replaced it) is not a failure worth a warning.
+func logRadioErr(op string, err error) {
+	if err == nil || errors.Is(err, context.Canceled) {
+		return
+	}
+	slog.Warn("radio directory request failed", "op", op, "err", err)
 }
 
 // nonNilStations makes Wails marshal an empty list as [] rather than null so

@@ -470,19 +470,46 @@ function wireError() {
   };
 }
 
+// friendlyErrorText maps a backend error message to what the user should see.
+// The radio-directory outage error carries a stable marker followed by raw
+// mirror detail (which can include the bare last-resort IP mirror, e.g.
+// https://91.98.4.78 - alarming-looking to users, field 2026-07-26). Show the
+// friendly localized message instead; the raw detail stays in app.log. Shared
+// by the error modal and the inline search error, which used to print the raw
+// text (#1065). Anything else passes through unchanged.
+export function friendlyErrorText(msg) {
+  const text = String(msg == null ? '' : msg);
+  if (text.includes('radio directory unreachable')) {
+    return t('radio.mirrorsDown');
+  }
+  return text;
+}
+
+// searchErrorText is the line the station search shows in place of results
+// when the directory request fails. A directory outage gets the friendly
+// sentence on its own (prefixing it with "Error:" reads as if the app broke);
+// any other failure keeps the "Error: <detail>" shape.
+export function searchErrorText(err) {
+  const raw = String((err && err.message) || err || '');
+  const friendly = friendlyErrorText(raw);
+  if (friendly !== raw) return friendly;
+  return `${t('common.error')}: ${raw}`;
+}
+
+// stormBannerBoxes picks the speakers the soft-restart notice (Bose 1036 storm
+// or silent recall refusal) is about. A speaker whose health check says it is
+// wedged already gets the "unplug it" banner; a restart notice next to it
+// gave two contradicting pieces of advice for the same speaker (#1065), and a
+// wedged box cannot run the soft restart anyway. So it is left out here.
+export function stormBannerBoxes(boxes) {
+  return (boxes || []).filter(b => b && (b.storm1036 || b.recallRefusal) && b.boxHealth !== 'wedged');
+}
+
 export function showError(msg) {
   wireError();
   const m = $('errorModal');
   if (!m) return;
-  let text = String(msg || t('modal.unknownError'));
-  // The radio-directory outage error carries a stable marker followed by raw
-  // mirror detail (which can include the bare last-resort IP mirror, e.g.
-  // https://91.98.4.78 - alarming-looking to users, field 2026-07-26). Show
-  // the friendly localized message instead; the raw detail stays in app.log.
-  if (text.includes('radio directory unreachable')) {
-    text = t('radio.mirrorsDown');
-  }
-  $('errorText').value = text;
+  $('errorText').value = friendlyErrorText(String(msg || t('modal.unknownError')));
   m.classList.remove('hidden');
 }
 
