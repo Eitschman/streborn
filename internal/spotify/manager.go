@@ -310,6 +310,18 @@ type Manager struct {
 	// never pauses. Keeping the engine playing across the flap means the box gets
 	// live audio the instant it re-attaches. Guarded by mu.
 	engineHotUntil time.Time
+	// The no-audio activation guard (idleguard.go): how many activations
+	// (recall marks, auto-switches, re-points) armed the engine since the box
+	// last received audio, when the last one was counted, and whether the
+	// guard's one WARN for the current trip was written. Guarded by mu.
+	idleActivations  int
+	idleActivationAt time.Time
+	idleGuardWarned  bool
+	// bosLineLimit keeps the per-track "track boundary (BOS)" line bounded
+	// while no box is attached (#1065: a wedged speaker filled the 32 KB NAND
+	// log tail in three minutes). Not guarded by mu, it has its own lock; the
+	// zero value is ready to use.
+	bosLineLimit lineLimiter
 	// The user-stop latch (stopintent.go). userStopAt is when the user last
 	// stopped or paused the speaker through STR; zero once a real new play
 	// intent arrived. engineRunningAtStop says whether the engine was producing

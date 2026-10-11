@@ -868,11 +868,17 @@ func (m *Manager) SetRecalling() {
 	// Keep the engine playing across the whole recall + verify window (the
 	// hardware verify re-points up to ~25 s after the press). A shorter window
 	// than recallUntil would let the drain pause the engine mid-flap and strand
-	// it again. See engineHotUntil.
-	if t := now.Add(30 * time.Second); t.After(m.engineHotUntil) {
+	// it again. See engineHotUntil. Not when the speaker has stopped taking
+	// audio altogether (idleguard.go): the recall itself still runs, but the
+	// engine is not kept racing for a box that never fetches (#1065).
+	ok, warn := m.admitActivationLocked(now)
+	if t := now.Add(30 * time.Second); ok && t.After(m.engineHotUntil) {
 		m.engineHotUntil = t
 	}
 	m.mu.Unlock()
+	if warn {
+		m.warnIdleGuard("recall keep-alive")
+	}
 }
 
 // recallWindow is how long SetRecalling marks a recall as in flight. Play
@@ -1003,6 +1009,17 @@ func (m *Manager) maybeActivate() {
 		m.mu.Unlock()
 		return
 	}
+	// The no-audio guard (idleguard.go): a speaker that accepted the last
+	// switches and never fetched the stream gets no further ones, or every
+	// track the engine finishes fires the next switch (#1065).
+	ok, warn := m.admitActivationLocked(time.Now())
+	if !ok {
+		m.mu.Unlock()
+		if warn {
+			m.warnIdleGuard("auto-switch to Spotify")
+		}
+		return
+	}
 	m.lastActivate = time.Now()
 	m.mu.Unlock()
 	m.logger.Info("spotify: app playback detected with box on another source, switching box to Spotify stream")
@@ -1033,8 +1050,16 @@ func (m *Manager) armRepoint() func(context.Context) {
 		return nil
 	}
 	m.lastActivate = time.Now()
-	if t := m.lastActivate.Add(30 * time.Second); t.After(m.engineHotUntil) {
+	// The re-point itself goes ahead (a box that is attached and playing
+	// needs it), only the keep-alive is subject to the no-audio guard.
+	ok, warn := m.admitActivationLocked(m.lastActivate)
+	if t := m.lastActivate.Add(30 * time.Second); ok && t.After(m.engineHotUntil) {
 		m.engineHotUntil = t
+	}
+	if warn {
+		// Logged under mu on purpose: this path returns with the lock held
+		// by the deferred unlock, and the line is written once per trip.
+		m.warnIdleGuard("re-point keep-alive")
 	}
 	return cb
 }
