@@ -78,6 +78,8 @@
   "wishes.unavailable": "目前無法載入清單。你仍然可以在 GitHub 上投票和提出願望。",
   "wishes.empty": "目前沒有開放中的願望。來提出第一個吧。",
   "wishes.asOf": "截至 {{date}}。清單每天更新一次。",
+  "wishes.searchPlaceholder": "搜尋願望",
+  "wishes.noMatch": "沒有符合搜尋的願望。",
   "nav.newFeatureDot": "STR 新功能，看看吧",
   "recent.title": "最近播放",
   "recent.subtitle": "你在喇叭上聽過的內容",

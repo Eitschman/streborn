@@ -78,6 +78,8 @@
   "wishes.unavailable": "Liste şu anda yüklenemedi. GitHub'da yine de oy verebilir ve öneride bulunabilirsin.",
   "wishes.empty": "Şu anda açık istek yok. İlk öneriyi sen yap.",
   "wishes.asOf": "{{date}} itibarıyla. Liste günde bir kez güncellenir.",
+  "wishes.searchPlaceholder": "Dileklerde ara",
+  "wishes.noMatch": "Aramanla eşleşen dilek yok.",
   "nav.newFeatureDot": "Yeni STR özelliği, göz at",
   "recent.title": "Son çalınanlar",
   "recent.subtitle": "Hoparlörlerinizde çaldıklarınız",

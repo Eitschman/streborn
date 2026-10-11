@@ -78,6 +78,8 @@
   "wishes.unavailable": "Sarakstu pašlaik neizdevās ielādēt. Balsot un ieteikt joprojām var GitHub.",
   "wishes.empty": "Pašlaik nav atvērtu vēlmju. Iesakiet pirmo.",
   "wishes.asOf": "Stāvoklis {{date}}. Saraksts tiek atjaunināts reizi dienā.",
+  "wishes.searchPlaceholder": "Meklēt vēlmes",
+  "wishes.noMatch": "Neviena vēlme neatbilst meklēšanai.",
   "nav.newFeatureDot": "Jauna STR funkcija, apskaties",
   "recent.title": "Nesen atskaņotie",
   "recent.subtitle": "Ko esat atskaņojuši savos skaļruņos",

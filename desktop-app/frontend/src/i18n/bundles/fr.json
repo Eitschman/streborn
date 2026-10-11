@@ -78,6 +78,8 @@
   "wishes.unavailable": "Impossible de charger la liste pour le moment. Vous pouvez quand même voter et proposer sur GitHub.",
   "wishes.empty": "Aucun souhait ouvert pour le moment. Soyez la première personne à en proposer un.",
   "wishes.asOf": "État au {{date}}. La liste est mise à jour une fois par jour.",
+  "wishes.searchPlaceholder": "Rechercher dans les souhaits",
+  "wishes.noMatch": "Aucun souhait ne correspond à ta recherche.",
   "nav.newFeatureDot": "Nouvelle fonction STR, jette un œil",
   "recent.title": "Écouté récemment",
   "recent.subtitle": "Ce que vous avez écouté sur vos enceintes",

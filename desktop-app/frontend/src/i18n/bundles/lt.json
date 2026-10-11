@@ -78,6 +78,8 @@
   "wishes.unavailable": "Sąrašo dabar įkelti nepavyko. Balsuoti ir siūlyti vis tiek galite GitHub.",
   "wishes.empty": "Šiuo metu atvirų pageidavimų nėra. Pasiūlykite pirmą.",
   "wishes.asOf": "Būsena {{date}}. Sąrašas atnaujinamas kartą per dieną.",
+  "wishes.searchPlaceholder": "Ieškoti pageidavimų",
+  "wishes.noMatch": "Nė vienas pageidavimas neatitinka paieškos.",
   "nav.newFeatureDot": "Nauja STR funkcija, pažiūrėk",
   "recent.title": "Neseniai grota",
   "recent.subtitle": "Ką grojote savo garsiakalbiuose",

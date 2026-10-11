@@ -78,6 +78,8 @@
   "wishes.unavailable": "تعذّر تحميل القائمة الآن. لا يزال بإمكانك التصويت والاقتراح على GitHub.",
   "wishes.empty": "لا توجد أمنيات مفتوحة الآن. كن أول من يقترح واحدة.",
   "wishes.asOf": "حتى {{date}}. تُحدَّث القائمة مرة واحدة يوميًا.",
+  "wishes.searchPlaceholder": "ابحث في الأمنيات",
+  "wishes.noMatch": "لا توجد أمنية تطابق بحثك.",
   "nav.newFeatureDot": "ميزة STR جديدة، ألقِ نظرة",
   "recent.title": "المشغّل مؤخّرًا",
   "recent.subtitle": "ما استمعت إليه على سمّاعاتك",
