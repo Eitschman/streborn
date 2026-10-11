@@ -78,6 +78,8 @@
   "wishes.unavailable": "今はリストを読み込めませんでした。GitHub での投票と提案はできます。",
   "wishes.empty": "受付中の要望は今ありません。最初の提案をどうぞ。",
   "wishes.asOf": "{{date}} 時点。リストは 1 日 1 回更新されます。",
+  "wishes.searchPlaceholder": "要望を検索",
+  "wishes.noMatch": "検索に一致する要望はありません。",
   "nav.newFeatureDot": "STRの新機能。タップしてみてください",
   "recent.title": "最近再生した項目",
   "recent.subtitle": "スピーカーで再生したもの",

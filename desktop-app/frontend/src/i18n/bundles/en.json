@@ -78,6 +78,8 @@
   "wishes.unavailable": "The list could not be loaded right now. You can still vote and suggest on GitHub.",
   "wishes.empty": "No open wishes right now. Be the first to suggest one.",
   "wishes.asOf": "As of {{date}}. The list is updated once a day.",
+  "wishes.searchPlaceholder": "Search the wishes",
+  "wishes.noMatch": "No wish matches your search.",
   "nav.newFeatureDot": "New STR feature, take a look",
   "recent.title": "Recently played",
   "recent.subtitle": "What you have played on your speakers",

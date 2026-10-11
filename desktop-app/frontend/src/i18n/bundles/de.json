@@ -78,6 +78,8 @@
   "wishes.unavailable": "Die Liste lässt sich gerade nicht laden. Abstimmen und vorschlagen geht trotzdem auf GitHub.",
   "wishes.empty": "Gerade gibt es keine offenen Wünsche. Schlag als Erste oder Erster etwas vor.",
   "wishes.asOf": "Stand: {{date}}. Die Liste wird einmal am Tag aktualisiert.",
+  "wishes.searchPlaceholder": "Wünsche durchsuchen",
+  "wishes.noMatch": "Kein Wunsch passt zu deiner Suche.",
   "nav.newFeatureDot": "Neue STR-Funktion, schau rein",
   "recent.title": "Zuletzt gehört",
   "recent.subtitle": "Was du auf deinen Lautsprechern gehört hast",

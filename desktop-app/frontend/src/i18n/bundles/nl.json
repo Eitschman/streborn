@@ -78,6 +78,8 @@
   "wishes.unavailable": "De lijst kan nu niet worden geladen. Stemmen en voorstellen kan nog steeds op GitHub.",
   "wishes.empty": "Er zijn nu geen openstaande wensen. Stel als eerste iets voor.",
   "wishes.asOf": "Stand van {{date}}. De lijst wordt één keer per dag bijgewerkt.",
+  "wishes.searchPlaceholder": "Wensen doorzoeken",
+  "wishes.noMatch": "Geen enkele wens past bij je zoekopdracht.",
   "nav.newFeatureDot": "Nieuwe STR-functie, kijk eens",
   "recent.title": "Onlangs afgespeeld",
   "recent.subtitle": "Wat je op je speakers hebt afgespeeld",

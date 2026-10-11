@@ -78,6 +78,8 @@
   "wishes.unavailable": "Nie udało się teraz wczytać listy. Nadal możesz głosować i proponować na GitHubie.",
   "wishes.empty": "Obecnie nie ma otwartych życzeń. Zaproponuj pierwsze.",
   "wishes.asOf": "Stan na {{date}}. Lista jest aktualizowana raz dziennie.",
+  "wishes.searchPlaceholder": "Szukaj w życzeniach",
+  "wishes.noMatch": "Żadne życzenie nie pasuje do wyszukiwania.",
   "nav.newFeatureDot": "Nowa funkcja STR, zobacz",
   "recent.title": "Ostatnio odtwarzane",
   "recent.subtitle": "Co odtwarzałeś na swoich głośnikach",

@@ -1011,9 +1011,29 @@ html.a11y-contrast .speaker-update-card .suc-ver { color: #fff; }
   gap: 8px;
   margin: 0 0 6px;
 }
+.wishes-search-row {
+  display: flex;
+  margin: 18px 0 0;
+}
+.wishes-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.wishes-nomatch {
+  margin: 14px 0 0;
+}
+.wish-row[hidden] {
+  display: none;
+}
 .wish-list {
   list-style: none;
-  margin: 18px 0 0;
+  margin: 12px 0 0;
   padding: 0;
 }
 .wish-row {

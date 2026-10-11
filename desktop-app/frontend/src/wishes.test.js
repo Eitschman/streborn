@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('./api.js', () => ({ BrowserOpenURL: () => {}, FeatureWishes: async () => null }));
 
-const { wishesHTML, wishTitle } = await import('./views/wishes.js');
+const { wishesHTML, wishTitle, wishMatches } = await import('./views/wishes.js');
 
 const tr = (k, p) => (p ? `${k}:${JSON.stringify(p)}` : k);
 const LIST = {
@@ -70,5 +70,39 @@ describe('wishTitle', () => {
   it('is what the rows render', () => {
     const html = wishesHTML({ ok: true, wishes: [{ ...w, url: 'https://x', votes: 8 }] }, (k) => k, 'de');
     expect(html).toContain('Uhr auf dem Display beim Streamen');
+  });
+});
+
+// A search box above the list filters it while typing (Jens, 2026-10-11).
+describe('wishes search', () => {
+  const clock = { number: 1098, title: 'Clock on the display while streaming', titles: { de: 'Uhr auf dem Display beim Streamen', es: 'Reloj en la pantalla' }, url: 'https://x/1098', votes: 8 };
+  const usb = { number: 1136, title: 'Play music from a USB stick plugged into the speaker', titles: { de: 'Musik vom USB-Stick am Lautsprecher' }, url: 'https://x/1136', votes: 5 };
+
+  it('matches the translated title, the English one and the number', () => {
+    expect(wishMatches(clock, 'de', 'uhr')).toBe(true);
+    expect(wishMatches(clock, 'de', 'clock')).toBe(true);
+    expect(wishMatches(clock, 'de', '1098')).toBe(true);
+    expect(wishMatches(usb, 'de', 'uhr')).toBe(false);
+  });
+
+  it('needs every word and ignores case and accents', () => {
+    expect(wishMatches(clock, 'de', 'DISPLAY streamen')).toBe(true);
+    expect(wishMatches(clock, 'de', 'display usb')).toBe(false);
+    expect(wishMatches({ ...clock, titles: { es: 'Música en la pantalla' } }, 'es', 'musica')).toBe(true);
+  });
+
+  it('matches everything when empty', () => {
+    expect(wishMatches(usb, 'de', '   ')).toBe(true);
+  });
+
+  it('renders the box, hides rows that do not match and says so when none do', () => {
+    const tr = (k) => k;
+    const html = wishesHTML({ ok: true, wishes: [clock, usb] }, tr, 'de', 'uhr');
+    expect(html).toContain('id="wishesSearch"');
+    expect(html).toContain('value="uhr"');
+    expect(html).toMatch(/data-wish-num="1136" hidden/);
+    expect(html).not.toMatch(/data-wish-num="1098" hidden/);
+    expect(html).toMatch(/id="wishesNoMatch" hidden/);
+    expect(wishesHTML({ ok: true, wishes: [clock, usb] }, tr, 'de', 'zzz')).not.toMatch(/id="wishesNoMatch" hidden/);
   });
 });
