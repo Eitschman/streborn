@@ -191,6 +191,52 @@ export function savePresetCase(nowLocation, sourceSlot, lastAppPlay, nowMs, fres
   return 'direct';
 }
 
+// spotifyURIFromContainer recovers the spotify: context URI from a box
+// now-playing location of the form "/playback/container/<base64 spotify:...>"
+// (STR writes this when it plays a Spotify selection; the agent encodes it
+// URL-safe, see internal/webui legacySpotifyURI). Used as a save-time fallback
+// when go-librespot's /spotify/info reports no context even though a real
+// playlist is playing (#45). Returns "" when the location is not a container or
+// does not decode to a spotify: URI.
+export function spotifyURIFromContainer(loc) {
+  const marker = '/playback/container/';
+  const i = (loc || '').indexOf(marker);
+  if (i < 0) return '';
+  let enc = loc.slice(i + marker.length);
+  const j = enc.search(/[/?#]/);
+  if (j >= 0) enc = enc.slice(0, j);
+  try {
+    const uri = atob(enc.replace(/-/g, '+').replace(/_/g, '/'));
+    return uri.startsWith('spotify:') ? uri : '';
+  } catch { return ''; }
+}
+
+// spotifySaveContextURI picks the spotify: URI a long-press save writes onto a
+// key while Spotify plays. Two very different things share the 'spotify' save
+// case:
+//
+//   - STR's own engine stream (source UPNP, location .../spotify/stream*.ogg):
+//     the engine knows the playlist/album, so its context wins, and the
+//     box location (which carries no URI) is only a fallback.
+//   - The speaker's NATIVE Spotify Connect entry (source SPOTIFY, location
+//     /playback/container/<base64 spotify:...>): the speaker's own client plays
+//     it, and STR's engine may still hold an older, paused context. The box's
+//     location is the truth here, and the engine context must never be used:
+//     it saved the wrong album under the playing song's name, the duplicate
+//     guard refused it as "already on key N", and "Move" would have taken that
+//     album off its key (#1077 issue 15).
+//
+// A native entry whose location does not decode yields '' (the caller then
+// says it cannot tell what plays) rather than a guess from the engine.
+export function spotifySaveContextURI(nowSource, nowLocation, engineCtx) {
+  const loc = nowLocation || '';
+  const boxURI = spotifyURIFromContainer(loc);
+  const engineStream = /\/spotify\/stream/.test(loc);
+  const native = !engineStream && (nowSource === 'SPOTIFY' || boxURI !== '');
+  if (native) return boxURI;
+  return engineCtx || boxURI || '';
+}
+
 // libraryPlayMatches reports whether the speaker is playing the single library
 // track the app last started from the Library (state.lastLibraryPlay). The
 // record alone is not enough: the user may have moved on with a hardware key,

@@ -260,6 +260,8 @@ import {
   compareVerBuild,
   getBoxLabel,
   savePresetCase,
+  spotifyURIFromContainer,
+  spotifySaveContextURI,
   libraryPlayMatches,
   presetBitrateLine,
   queueSaveFallsThrough,
@@ -5928,25 +5930,8 @@ function decodeProxyUrl(loc) {
   return loc;
 }
 
-// spotifyURIFromContainer recovers the spotify: context URI from a box
-// now-playing location of the form "/playback/container/<base64 spotify:...>"
-// (STR writes this when it plays a Spotify selection; the agent encodes it
-// URL-safe, see internal/webui legacySpotifyURI). Used as a save-time fallback
-// when go-librespot's /spotify/info reports no context even though a real
-// playlist is playing (#45). Returns "" when the location is not a container or
-// does not decode to a spotify: URI.
-function spotifyURIFromContainer(loc) {
-  const marker = '/playback/container/';
-  const i = (loc || '').indexOf(marker);
-  if (i < 0) return '';
-  let enc = loc.slice(i + marker.length);
-  const j = enc.search(/[/?#]/);
-  if (j >= 0) enc = enc.slice(0, j);
-  try {
-    const uri = atob(enc.replace(/-/g, '+').replace(/_/g, '/'));
-    return uri.startsWith('spotify:') ? uri : '';
-  } catch { return ''; }
-}
+// spotifyURIFromContainer lives in utils.js (shared with the preset-save
+// URI decision, spotifySaveContextURI).
 
 // SPOTIFY_LOGO moved to logos.js (shared with the Recently-played view).
 
@@ -7263,7 +7248,10 @@ async function saveCurrentToSlot(slot) {
     // made a legitimate save fail with a false "no replayable playlist" (Pierre,
     // #45, was on Premium playing a playlist). Re-read the live context from the
     // speaker now instead of trusting the cache.
-    let ctxUri = state.spotifyNow ? state.spotifyNow.context : '';
+    // The URI itself is decided after the engine read below
+    // (spotifySaveContextURI): the engine's context only counts while the
+    // speaker is playing STR's engine stream.
+    let engineCtx = state.spotifyNow ? state.spotifyNow.context : '';
     let acct = (state.spotifyNow && state.spotifyNow.account) || '';
     // Whether a key on THIS speaker could play at all. The same read already
     // happens here, so asking costs nothing. undefined means the speaker's
@@ -7278,7 +7266,7 @@ async function saveCurrentToSlot(slot) {
       const np = await SpotifyNowPlaying(state.currentBox.host, state.currentBox.port);
       if (np) {
         gateRead = 'yes';
-        if (np.context) ctxUri = np.context;
+        if (np.context) engineCtx = np.context;
         if (np.account) acct = np.account;
         if (np.canRecall !== null && np.canRecall !== undefined) canRecall = !!np.canRecall;
         if (np.premiumRequired !== null && np.premiumRequired !== undefined) premiumRequired = !!np.premiumRequired;
@@ -7291,7 +7279,15 @@ async function saveCurrentToSlot(slot) {
     // giving up (Pierre, #45: Premium, a playlist was playing, the box location
     // held spotify:playlist:..., but np.context came back empty so the save
     // wrongly failed).
-    if (!ctxUri) ctxUri = spotifyURIFromContainer(state.nowLocation);
+    //
+    // And the reverse (#1077 issue 15): on the speaker's OWN Spotify entry
+    // (source SPOTIFY, same /playback/container location form) STR's engine is
+    // not what plays, yet it can still hold an older, paused context. Taking
+    // that saved the wrong album under the playing song's name, the duplicate
+    // guard refused it as "already on key 6", and "Move" would have taken it
+    // off key 6. So the speaker's own location decides there, and the engine
+    // answer is used only for the account and the recall gates.
+    const ctxUri = spotifySaveContextURI(state.nowSource, state.nowLocation, engineCtx);
     if (!ctxUri) {
       // Spotify is playing but the speaker reported no playlist/album/track
       // context. This is NOT the same as a non-replayable station: a real

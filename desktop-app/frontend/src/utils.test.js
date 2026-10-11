@@ -1,7 +1,7 @@
 // Tests for the pure decision helpers in utils.js.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { savePresetCase, libraryPlayMatches, queueSaveFallsThrough, bassControlsDisabled, bassSliderProps } from './utils.js';
+import { savePresetCase, spotifySaveContextURI, spotifyURIFromContainer, libraryPlayMatches, queueSaveFallsThrough, bassControlsDisabled, bassSliderProps } from './utils.js';
 
 const FRESH_MS = 2 * 60 * 1000;
 const NOW = 1_000_000_000;
@@ -225,5 +225,45 @@ describe('settingsView.bassUnavailable', () => {
     for (const loc of bundles.filter((l) => l !== 'en')) {
       expect(read(loc)['settingsView.bassUnavailable'], `${loc}.json`).not.toBe(en);
     }
+  });
+});
+
+// What a long-press save writes onto a key while Spotify plays (#1077 issue 15).
+describe('spotifySaveContextURI', () => {
+  const b64url = (str) => Buffer.from(str).toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+  const nativeTrack = 'spotify:track:NATIVE';
+  const nativeLoc = `/playback/container/${b64url(nativeTrack)}`;
+  const staleEngine = 'spotify:album:STALE_FROM_KEY_6';
+  const engineLoc = 'http://192.0.2.1:8888/spotify/stream-6.ogg';
+
+  it('decodes the box container location', () => {
+    expect(spotifyURIFromContainer(nativeLoc)).toBe(nativeTrack);
+    expect(spotifyURIFromContainer(engineLoc)).toBe('');
+    expect(spotifyURIFromContainer('')).toBe('');
+  });
+
+  it('takes the speaker`s own Spotify URI, never the engine`s stale context', () => {
+    expect(spotifySaveContextURI('SPOTIFY', nativeLoc, staleEngine)).toBe(nativeTrack);
+    // Source not yet known: the decodable container still wins.
+    expect(spotifySaveContextURI('', nativeLoc, staleEngine)).toBe(nativeTrack);
+  });
+
+  it('never guesses from the engine on a native entry it cannot decode', () => {
+    expect(spotifySaveContextURI('SPOTIFY', '/playback/container/not-base64!', staleEngine)).toBe('');
+  });
+
+  it('takes the engine context while the speaker plays STR`s engine stream', () => {
+    expect(spotifySaveContextURI('UPNP', engineLoc, 'spotify:playlist:LIVE')).toBe('spotify:playlist:LIVE');
+    expect(spotifySaveContextURI('UPNP', engineLoc, '')).toBe('');
+  });
+
+  it('falls back to the engine context without a box location', () => {
+    expect(spotifySaveContextURI('UPNP', '', 'spotify:playlist:LIVE')).toBe('spotify:playlist:LIVE');
+    expect(spotifySaveContextURI(undefined, undefined, 'spotify:playlist:LIVE')).toBe('spotify:playlist:LIVE');
+  });
+
+  it('keeps the #45 fallback: engine context empty, box location carries the URI', () => {
+    const loc = `/playback/container/${b64url('spotify:playlist:P45')}`;
+    expect(spotifySaveContextURI('UPNP', loc, '')).toBe('spotify:playlist:P45');
   });
 });
