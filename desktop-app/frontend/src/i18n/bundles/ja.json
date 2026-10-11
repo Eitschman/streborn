@@ -722,6 +722,8 @@
   "share.groups.direct": "直接",
   "credits.title": "オープンソースとクレジット",
   "credits.intro": "STRはオープンソースで構築されています。同梱、リンク、または基盤として利用しているプロジェクトに感謝します:",
+  "credits.ownLicense": "STR 自体は Apache License 2.0 でライセンスされています。STR を基にした作品はこの表示を残し、独自の名前を使います。",
+  "credits.licenseLink": "ライセンス",
   "credits.by": "作者:",
   "credits.researchTitle": "調査とリバースエンジニアリング",
   "credits.researchIntro": "STRはこれらのプロジェクトのコードを同梱していませんが、中心的な仕組みのいくつかは、彼らが公開した成果なしには存在しませんでした。ほとんどは支援を一切受け付けていません。",

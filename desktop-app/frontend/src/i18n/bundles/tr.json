@@ -722,6 +722,8 @@
   "share.groups.direct": "Doğrudan",
   "credits.title": "Açık kaynak ve teşekkürler",
   "credits.intro": "STR açık kaynak üzerine kurulmuştur. Paketlediği, bağlantı verdiği veya üzerine inşa ettiği projelere teşekkürler:",
+  "credits.ownLicense": "STR'nin kendisi Apache License 2.0 ile lisanslanmıştır. STR tabanlı bir çalışma bu bildirimi korur ve kendi adını kullanır.",
+  "credits.licenseLink": "Lisans",
   "credits.by": "tarafından",
   "credits.researchTitle": "Araştırma ve tersine mühendislik",
   "credits.researchIntro": "STR bu projelerin kodunu içermez, ancak temel mekanizmalarının birçoğu onların yayımladıkları olmadan var olmazdı. Çoğu hiçbir destek kabul etmiyor.",

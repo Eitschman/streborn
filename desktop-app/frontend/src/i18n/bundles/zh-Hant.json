@@ -766,6 +766,8 @@
   "share.groups.direct": "直接",
   "credits.title": "開放原始碼與致謝",
   "credits.intro": "STR 是建立在開放原始碼上的。感謝這些被它收錄、連結或依賴的專案：",
+  "credits.ownLicense": "STR 本身採用 Apache License 2.0 授權。以 STR 為基礎的作品須保留此聲明，並使用自己的名稱。",
+  "credits.licenseLink": "授權條款",
   "credits.by": "作者",
   "credits.researchTitle": "研究與逆向工程",
   "credits.researchIntro": "STR 沒有附上他們的任何程式碼，但少了他們公開的成果，STR 好幾個核心機制根本不會存在。他們大多完全不接受任何贊助。",

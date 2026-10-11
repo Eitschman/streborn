@@ -1817,6 +1817,11 @@ html.a11y-light .preset.error .name { color: #991b1b; }
 @media (prefers-reduced-motion: reduce) { .ua-row.ua-busy .ua-bar-fill { animation: none; opacity: 0.35; } }
 
 .credits-list { max-height: 50vh; overflow-y: auto; margin-bottom: 14px; }
+.credit-own {
+  padding: 8px 0 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--c-surface-2);
+}
 .credit-row { padding: 7px 0; border-bottom: 1px solid var(--c-border); font-size: 13px; }
 .credit-row:last-child { border-bottom: none; }
 .credit-name { font-weight: 600; }

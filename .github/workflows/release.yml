@@ -875,6 +875,9 @@ jobs:
           cp "desktop-app/build/bin/ST Reborn" "release-out/STR-Linux-x64"
           chmod +x "release-out/STR-Linux-x64"
           cp desktop-app/build/appicon.png release-out/STR.png
+          # The license, the attribution and the third-party notices travel with
+          # the archive, as the Apache License and the GPL engine ask.
+          cp LICENSE NOTICE THIRD-PARTY-NOTICES.md release-out/
           cat > release-out/README-linux.txt <<'TXT'
           STR for Linux x86_64
           --------------------
@@ -935,8 +938,8 @@ jobs:
           INSTALL
           chmod +x release-out/install.sh
           cd release-out
-          tar -czf STR-Linux-x64.tar.gz STR-Linux-x64 STR.png install.sh README-linux.txt
-          rm STR-Linux-x64 STR.png install.sh README-linux.txt
+          tar -czf STR-Linux-x64.tar.gz STR-Linux-x64 STR.png install.sh README-linux.txt LICENSE NOTICE THIRD-PARTY-NOTICES.md
+          rm STR-Linux-x64 STR.png install.sh README-linux.txt LICENSE NOTICE THIRD-PARTY-NOTICES.md
           sha256sum "STR-Linux-x64.tar.gz" > "STR-Linux-x64.tar.gz.sha256"
           cat "STR-Linux-x64.tar.gz.sha256"
 

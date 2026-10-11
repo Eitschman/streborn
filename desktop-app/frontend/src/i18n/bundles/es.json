@@ -722,6 +722,8 @@
   "share.groups.direct": "Directo",
   "credits.title": "Código abierto y créditos",
   "credits.intro": "STR se basa en código abierto. Gracias a los proyectos que incluye, enlaza o sobre los que se construye:",
+  "credits.ownLicense": "STR tiene licencia Apache 2.0. Un trabajo basado en STR conserva este aviso y usa un nombre propio.",
+  "credits.licenseLink": "Licencia",
   "credits.by": "de",
   "credits.researchTitle": "Investigación e ingeniería inversa",
   "credits.researchIntro": "STR no incluye nada de su código, pero varios de sus mecanismos centrales no existirían sin lo que estos proyectos publicaron. La mayoría no acepta ningún tipo de apoyo.",
