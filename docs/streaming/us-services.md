@@ -138,8 +138,8 @@ curl -s -X POST -d '<ContentItem ...>...</ContentItem>' http://192.0.2.1:8090/se
 
 `sourceAccount` is the account the speaker lists for `PANDORA` in
 `:8090/sources`. Once a station plays, holding a preset key on the speaker
-stores it (see Presets below). The STR app has no button for either step
-yet.
+stores it (see Presets below). The STR app does both steps itself (see
+"In the STR app").
 
 ## Presets
 
