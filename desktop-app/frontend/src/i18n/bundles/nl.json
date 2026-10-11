@@ -359,6 +359,7 @@
   "preset.longPressHint": "ingedrukt houden = huidige zender hier opslaan",
   "preset.statePlay": "speelt nu af",
   "preset.stateBuf": "stream start ...",
+  "preset.errNoStart": "De speaker is niet begonnen met afspelen. Druk nog een keer op de toets.",
   "preset.statePause": "gepauzeerd",
   "preset.assignTitle": "Aan voorkeuzetoets toewijzen",
   "preset.assignStationTitle": "Zender aan een toets toewijzen",

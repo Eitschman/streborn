@@ -387,6 +387,7 @@
   "preset.lossDismiss": "關閉",
   "preset.statePlay": "正在播放",
   "preset.stateBuf": "串流啟動中 ...",
+  "preset.errNoStart": "喇叭沒有開始播放。請再按一次按鍵。",
   "preset.statePause": "已暫停",
   "preset.assignTitle": "放到預設鍵上",
   "preset.assignStationTitle": "把電台放到預設鍵上",

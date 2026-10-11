@@ -359,6 +359,7 @@
   "preset.longPressHint": "palaikykite = išsaugoti dabartinę stotį čia",
   "preset.statePlay": "dabar grojama",
   "preset.stateBuf": "srautas pradedamas ...",
+  "preset.errNoStart": "Garsiakalbis nepradėjo groti. Paspauskite mygtuką dar kartą.",
   "preset.statePause": "pristabdyta",
   "preset.assignTitle": "Priskirti parinkties mygtukui",
   "preset.assignStationTitle": "Priskirti stotį mygtukui",

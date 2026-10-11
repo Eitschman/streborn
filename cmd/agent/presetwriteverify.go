@@ -55,3 +55,20 @@ func splitWritesByWhatTheBoxKept(boxHost string, written []boxcli.PresetSpec) (l
 	sort.Ints(lost)
 	return landed, lost
 }
+
+// splitHealedFromRewritten separates the landed slots that were missing before
+// the write (genuinely healed) from those the box already listed (a forced
+// rewrite). The readback cannot tell a refused rewrite of a slot that was
+// already there from one that landed, so only the first group may be logged
+// as healed (#1077: a stereo follower refused all six writes of a forced pass
+// and the log claimed six heals).
+func splitHealedFromRewritten(landed []int, before map[int]string) (healed, rewritten []int) {
+	for _, slot := range landed {
+		if _, was := before[slot]; was {
+			rewritten = append(rewritten, slot)
+			continue
+		}
+		healed = append(healed, slot)
+	}
+	return healed, rewritten
+}

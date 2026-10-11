@@ -359,6 +359,7 @@
   "preset.longPressHint": "mantener pulsado = guardar aquí la emisora actual",
   "preset.statePlay": "reproduciendo ahora",
   "preset.stateBuf": "iniciando flujo ...",
+  "preset.errNoStart": "El altavoz no empezó a reproducir. Pulsa la tecla otra vez.",
   "preset.statePause": "en pausa",
   "preset.assignTitle": "Asignar a una tecla de preajuste",
   "preset.assignStationTitle": "Asignar emisora a una tecla",

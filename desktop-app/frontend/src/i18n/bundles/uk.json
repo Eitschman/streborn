@@ -359,6 +359,7 @@
   "preset.longPressHint": "утримання = зберегти сюди поточну станцію",
   "preset.statePlay": "зараз грає",
   "preset.stateBuf": "запуск потоку ...",
+  "preset.errNoStart": "Динамік не почав відтворення. Натисніть кнопку ще раз.",
   "preset.statePause": "пауза",
   "preset.assignTitle": "Призначити на кнопку пресета",
   "preset.assignStationTitle": "Призначити станцію на кнопку",

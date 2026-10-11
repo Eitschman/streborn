@@ -387,6 +387,7 @@
   "preset.lossDismiss": "Schließen",
   "preset.statePlay": "wird abgespielt",
   "preset.stateBuf": "Stream wird hergestellt ...",
+  "preset.errNoStart": "Der Lautsprecher hat nicht angefangen zu spielen. Drück die Taste noch einmal.",
   "preset.statePause": "pausiert",
   "preset.assignTitle": "Auf Speichertaste legen",
   "preset.assignStationTitle": "Sender auf Taste legen",

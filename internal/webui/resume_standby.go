@@ -715,6 +715,14 @@ func (s *Server) zoneJustChanged() (bool, time.Duration) {
 	return age < zoneSettleWindow, age
 }
 
+// GroupFollower exposes the zone half of zonePushWouldFightGroup to the
+// preset reconcile (cmd/agent): true when the speaker's own zone says it
+// follows a group, or is in one and cannot tell which role it has. An
+// unreadable zone answers false, so the standalone majority keeps writing.
+func (s *Server) GroupFollower() (bool, string) {
+	return s.zonePushWouldFightGroup()
+}
+
 func (s *Server) zonePushWouldFightGroup() (standDown bool, reason string) {
 	if s.boxHost == "" {
 		return false, ""
@@ -1903,7 +1911,16 @@ func (s *Server) maybeRePush() {
 				s.lastPlay.rePushes = 0
 			}
 			s.lastPlayMu.Unlock()
+			return
 		}
+		// A box that let go of the stream but still shows BUFFERING used to
+		// end here without a word. A stereo pair whose follower could not
+		// decode the first frame sat in BUFFERING (white blinking "Loading")
+		// for good, with nothing in the log saying why (#1077). Say so, and
+		// give a Spotify key one bounded rescue.
+		s.logger.Warn("re-push: the speaker dropped the stream but is still buffering, not playing",
+			"standby", standby, "busy", busy, "buffering", buffering)
+		s.rescueStuckSpotifyBuffering()
 		return
 	}
 
@@ -2237,6 +2254,9 @@ func (s *Server) boxPlayState() (standby, busy bool) {
 // retrying a file it cannot read buffers forever, and treating that as recovery
 // is what kept the re-push hard stop from ever engaging (#844).
 func (s *Server) boxPlayStateDetail() (standby, busy, buffering bool) {
+	if s.playStateDetailFn != nil {
+		return s.playStateDetailFn()
+	}
 	if s.playStateFn != nil {
 		standby, busy = s.playStateFn()
 		return standby, busy, false

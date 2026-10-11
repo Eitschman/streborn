@@ -359,6 +359,7 @@
   "preset.longPressHint": "長押し = 現在の放送局をここに保存",
   "preset.statePlay": "再生中",
   "preset.stateBuf": "ストリーム開始中 ...",
+  "preset.errNoStart": "スピーカーの再生が始まりませんでした。もう一度キーを押してください。",
   "preset.statePause": "一時停止中",
   "preset.assignTitle": "プリセットキーに割り当て",
   "preset.assignStationTitle": "放送局をキーに割り当て",

@@ -956,6 +956,23 @@ func reconcileOnce(store *presets.Store, boxHost string, logger *slog.Logger, fo
 			nativeWrites = nil
 		}
 	}
+	// A group or stereo-pair FOLLOWER refuses every preset write: its firmware
+	// logs "AddPreset - failed due to invalid SourceID" for each one while it
+	// sits in GroupSlave. The forced full re-sync after the box became ready
+	// still wrote all six into a follower of an ST10 pair, and because the
+	// slots were already on the box, the readback found them and the log said
+	// "healed" six times (#1077). Skip the writes while this speaker follows;
+	// the box keeps the keys it has, and the regular pass writes whatever is
+	// missing once it stands alone again. No extra polling: the check runs
+	// only when this pass has something to write.
+	if len(missing) > 0 || len(nativeWrites) > 0 {
+		if follower, why := presetWriteGroupFollower(); follower {
+			logger.Info("preset reconcile: writes skipped, this speaker follows a group and its firmware refuses preset writes until it stands alone",
+				"reason", why, "slots", len(missing)+len(nativeWrites), "forced", forceFull)
+			missing = nil
+			nativeWrites = nil
+		}
+	}
 	if len(nativeWrites) > 0 {
 		writeNativeSlots(boxHost, nativeWrites, logger)
 	}
@@ -1009,8 +1026,15 @@ func reconcileOnce(store *presets.Store, boxHost string, logger *slog.Logger, fo
 		}
 		if len(accepted) > 0 {
 			landed, lost := splitWritesByWhatTheBoxKept(boxHost, accepted)
-			for _, slot := range landed {
+			healed, kept := splitHealedFromRewritten(landed, boxLocs)
+			for _, slot := range healed {
 				logger.Info("preset reconcile healed", "slot", slot)
+			}
+			if len(kept) > 0 {
+				// These were on the box before the write, so finding them after
+				// it proves nothing: a refused rewrite reads exactly the same.
+				logger.Info("preset reconcile: rewrote slots the box already held, it still lists them",
+					"slots", kept)
 			}
 			if len(lost) > 0 {
 				syncFailed = true
