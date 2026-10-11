@@ -359,6 +359,7 @@
   "preset.longPressHint": "turiet = saglabāt pašreizējo staciju šeit",
   "preset.statePlay": "tagad atskaņo",
   "preset.stateBuf": "straume tiek sākta ...",
+  "preset.errNoStart": "Skaļrunis nesāka atskaņot. Nospiediet taustiņu vēlreiz.",
   "preset.statePause": "apturēts",
   "preset.assignTitle": "Piešķirt iestatījumu pogai",
   "preset.assignStationTitle": "Piešķirt staciju pogai",

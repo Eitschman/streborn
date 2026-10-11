@@ -359,6 +359,7 @@
   "preset.longPressHint": "basılı tut = mevcut istasyonu buraya kaydet",
   "preset.statePlay": "şimdi çalıyor",
   "preset.stateBuf": "akış başlatılıyor ...",
+  "preset.errNoStart": "Hoparlör çalmaya başlamadı. Tuşa tekrar basın.",
   "preset.statePause": "duraklatıldı",
   "preset.assignTitle": "Ön ayar tuşuna ata",
   "preset.assignStationTitle": "İstasyonu tuşa ata",

@@ -359,6 +359,7 @@
   "preset.longPressHint": "przytrzymaj = zapisz tu bieżącą stację",
   "preset.statePlay": "teraz odtwarza",
   "preset.stateBuf": "uruchamianie strumienia ...",
+  "preset.errNoStart": "Głośnik nie zaczął odtwarzać. Naciśnij klawisz ponownie.",
   "preset.statePause": "wstrzymano",
   "preset.assignTitle": "Przypisz do przycisku",
   "preset.assignStationTitle": "Przypisz stację do przycisku",

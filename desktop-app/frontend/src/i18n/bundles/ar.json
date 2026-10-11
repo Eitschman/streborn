@@ -359,6 +359,7 @@
   "preset.longPressHint": "اضغط مطوّلًا = حفظ المحطة الحالية هنا",
   "preset.statePlay": "قيد التشغيل الآن",
   "preset.stateBuf": "بدء البثّ ...",
+  "preset.errNoStart": "لم يبدأ مكبر الصوت التشغيل. اضغط على الزر مرة أخرى.",
   "preset.statePause": "متوقّف مؤقّتًا",
   "preset.assignTitle": "تعيين لزر إعداد مسبق",
   "preset.assignStationTitle": "تعيين المحطة لزر",

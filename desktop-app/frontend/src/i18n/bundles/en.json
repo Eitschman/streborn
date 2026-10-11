@@ -387,6 +387,7 @@
   "preset.lossDismiss": "Dismiss",
   "preset.statePlay": "now playing",
   "preset.stateBuf": "stream starting ...",
+  "preset.errNoStart": "The speaker did not start playing. Press the key again.",
   "preset.statePause": "paused",
   "preset.assignTitle": "Assign to preset key",
   "preset.assignStationTitle": "Assign station to a key",

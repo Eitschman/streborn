@@ -3,6 +3,7 @@ import { pinPromptKey } from './worldmapinvite.js';
 import { noteNotReady, noteWakeSucceeded, escalationForCount } from './wakeescalation.js';
 import { noteCheckFailed, noteCheckSucceeded, shouldSayChecksAreFailing } from './updatecheckhealth.js';
 import { spotifyAccountName } from './spotifyaccountlabel.js';
+import { nextStuckBuffering } from './stuckbuffering.js';
 import { statusTickScope } from './statusrefreshscope.js';
 import { muteView, muteAfterPress } from './mutebutton.js';
 import { sshBannerShow } from './sshbanner.js';
@@ -6703,6 +6704,8 @@ function renderPresets() {
     // the key holds.
     activeStreamURL = playingURL;
   }
+  // The lit tile, for the stuck-buffering check in refreshStatus (#1077).
+  state.activePresetSlot = null;
   for (let i = 1; i <= 6; i++) {
     const p = state.presets.find(x => x.slot === i);
     // A slot STR does not manage may still hold one of the box's own presets
@@ -6742,6 +6745,7 @@ function renderPresets() {
       playingName,
       playingUrl: playingURL,
     }));
+    if (isActive && p && state.activePresetSlot === null) state.activePresetSlot = i;
     const hasErr = !!state.presetErrors[i];
     const div = document.createElement('div');
     div.className = 'preset' + (p || bp ? '' : ' empty') + (isActive ? ' playing' : '') + (hasErr ? ' error' : '') + (bp ? ' box-native' : '');
@@ -7597,6 +7601,7 @@ async function play(slot) {
     state.nowUUID = '';
     state.optimisticUntil = Date.now() + 6000;
     delete state.presetErrors[slot];
+    state.stuckBuf = null;
     renderPresets();
     // Also repaint the now-playing status line from the optimistic state, not
     // just the preset tile: it reads purely from cached state, so without this
@@ -8505,6 +8510,23 @@ async function refreshStatus() {
       if ((ps === 'PLAY_STATE' || ps === 'BUFFERING_STATE') &&
           proxiedRadioPlaying(newLoc)) {
         scheduleLiveTitle();
+      }
+    }
+
+    // A key that stays BUFFERING for 30 s without ever playing gets an error
+    // instead of "stream starting ..." forever (#1077: a stereo pair whose
+    // follower could not decode the first frame left the lead speaker
+    // buffering for good). The agent gives such a Spotify key one clean
+    // retry; a PLAY_STATE below clears this error again.
+    {
+      const box = state.currentBox;
+      const slot = state.activePresetSlot;
+      const key = box && slot != null ? `${box.host}#${slot}` : null;
+      const r = nextStuckBuffering(state.stuckBuf || null, key, ps, Date.now());
+      state.stuckBuf = r.tracker;
+      if (r.stuck && !state.presetErrors[slot]) {
+        state.presetErrors[slot] = t('preset.errNoStart');
+        renderPresets();
       }
     }
 

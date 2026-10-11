@@ -359,6 +359,7 @@
   "preset.longPressHint": "appui long = enregistrer ici la station en cours",
   "preset.statePlay": "lecture en cours",
   "preset.stateBuf": "démarrage du flux ...",
+  "preset.errNoStart": "L'enceinte n'a pas commencé la lecture. Appuyez à nouveau sur la touche.",
   "preset.statePause": "en pause",
   "preset.assignTitle": "Affecter à une touche de préréglage",
   "preset.assignStationTitle": "Affecter la station à une touche",
