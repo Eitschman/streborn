@@ -684,6 +684,7 @@ export namespace main {
 	    account: string;
 	    homepage: string;
 	    mime?: string;
+	    durationSec?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new RecentItem(source);
@@ -701,6 +702,7 @@ export namespace main {
 	        this.account = source["account"];
 	        this.homepage = source["homepage"];
 	        this.mime = source["mime"];
+	        this.durationSec = source["durationSec"];
 	    }
 	}
 	export class SavedPair {

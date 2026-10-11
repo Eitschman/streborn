@@ -79,7 +79,7 @@ describe('replaying a Recently-played folder card', () => {
     // The order is the fix. If PlayURL ran first the queue would be cleared.
     const branch = src.slice(src.indexOf("} else if (c.source === 'upnp') {"));
     const askedAt = branch.indexOf('if (await replayFolderCard(c, box)) return;');
-    const playedAt = branch.indexOf('await PlayURL(');
+    const playedAt = branch.indexOf('await replayLibraryTrack(');
     expect(askedAt).toBeGreaterThan(-1);
     expect(askedAt).toBeLessThan(playedAt);
   });

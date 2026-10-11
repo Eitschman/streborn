@@ -246,7 +246,7 @@ func (s *Server) handlePlay(w http.ResponseWriter, r *http.Request) {
 	// Recently-played (#135): a network-library file carries a MIME; radio does
 	// not. Record the original URL as the replayable card target, not the proxy.
 	if req.Mime != "" {
-		s.recentNoteCard("upnp", req.URL, req.Title, req.Icon, req.URL, "", "", mime)
+		s.recentNoteLibraryCard(req.URL, req.Title, req.Icon, req.URL, mime, req.DurationSec)
 	} else {
 		s.recentNoteCard("radio", req.URL, req.Title, req.Icon, req.URL, "", req.Homepage, "")
 	}
@@ -529,7 +529,7 @@ func (s *Server) handlePlaySlot(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		s.recentNoteCard("upnp", p.StreamURL, p.Name, p.Art, p.StreamURL, "", "", mime) // #135
+		s.recentNoteLibraryCard(p.StreamURL, p.Name, p.Art, p.StreamURL, mime, s.recentPresetLengthSec(p)) // #135
 		recallDelivered = true
 		writeJSON(w, http.StatusOK, map[string]any{"status": "playing", "slot": slot, "name": p.Name})
 		return
@@ -775,10 +775,38 @@ func (s *Server) SetTransportCommandHook(fn func()) {
 // NAS file) as the start of a Recently-played card. For radio and Spotify it also
 // remembers the card so the live track callbacks can hang tracks under it.
 func (s *Server) recentNoteCard(source, key, name, art, url, account, homepage, mime string) {
+	s.recentNoteEntry(recent.Entry{Source: source, CardKey: key, CardName: name, CardArt: art, CardURL: url, Account: account, Homepage: homepage, Mime: mime})
+}
+
+// recentNoteLibraryCard records a network-library file as a Recently-played
+// card together with its length, so a replay from the card can hand the length
+// to the speaker and the app draws the progress bar again (#845). durationSec
+// 0 means unknown and is stored as absent.
+func (s *Server) recentNoteLibraryCard(key, name, art, url, mime string, durationSec int) {
+	if durationSec < 0 {
+		durationSec = 0
+	}
+	s.recentNoteEntry(recent.Entry{Source: "upnp", CardKey: key, CardName: name, CardArt: art, CardURL: url, Mime: mime, DurationSec: durationSec})
+}
+
+// recentPresetLengthSec is the length to record for a library key's recall:
+// the stored one, else the one learned from an earlier direct play. Quiet twin
+// of libraryPresetLength, which already logged the fallback for this recall.
+func (s *Server) recentPresetLengthSec(p presets.Preset) int {
+	if p.DurationSec > 0 {
+		return p.DurationSec
+	}
+	return int(s.trackLens.get(p.StreamURL) / time.Second)
+}
+
+// recentNoteEntry adds a card-start entry and remembers the card for the live
+// track callbacks. Shared by recentNoteCard and recentNoteLibraryCard.
+func (s *Server) recentNoteEntry(e recent.Entry) {
+	source, key, name, art, url, account, homepage := e.Source, e.CardKey, e.CardName, e.CardArt, e.CardURL, e.Account, e.Homepage
 	if s.recent == nil || key == "" {
 		return
 	}
-	s.recent.Add(recent.Entry{Source: source, CardKey: key, CardName: name, CardArt: art, CardURL: url, Account: account, Homepage: homepage, Mime: mime})
+	s.recent.Add(e)
 	s.recentMu.Lock()
 	switch source {
 	case "radio":
@@ -803,11 +831,15 @@ func (s *Server) recentNoteCard(source, key, name, art, url, account, homepage, 
 // the start of a "library" (upnp) Recently-played card, and remembers it so each
 // track the queue pushes is hung under it (like radio ICY tracks under a station).
 // The replay target is the first track's URL; clicking the card re-plays it.
-func (s *Server) recentNoteQueueCard(key, name, art, url, mime string) {
+//
+// durationSec is the length of that first track (0 = unknown). When the app
+// cannot replay the whole folder it falls back to playing the one stored URL,
+// which then still gets its progress bar (#845).
+func (s *Server) recentNoteQueueCard(key, name, art, url, mime string, durationSec int) {
 	s.recentMu.Lock()
-	s.recentQueueCard = recentCardCtx{key: key, name: name, art: art, url: url, mime: mime}
+	s.recentQueueCard = recentCardCtx{key: key, name: name, art: art, url: url, mime: mime, durationSec: durationSec}
 	s.recentMu.Unlock()
-	s.recentNoteCard("upnp", key, name, art, url, "", "", mime)
+	s.recentNoteLibraryCard(key, name, art, url, mime, durationSec)
 }
 
 // recentNoteQueueTrack hangs the track the play-queue just started under the
@@ -830,7 +862,7 @@ func (s *Server) recentNoteQueueTrack(track, artist string) {
 	if c.key == "" {
 		return
 	}
-	s.recent.Add(recent.Entry{Source: "upnp", CardKey: c.key, CardName: c.name, CardArt: c.art, CardURL: c.url, Track: track, Mime: c.mime})
+	s.recent.Add(recent.Entry{Source: "upnp", CardKey: c.key, CardName: c.name, CardArt: c.art, CardURL: c.url, Track: track, Mime: c.mime, DurationSec: c.durationSec})
 }
 
 // recentClearQueueCard forgets the active folder card so later tracks (a single

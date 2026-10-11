@@ -27,6 +27,10 @@ type RecentItem struct {
 	// the agent's value was dropped at this boundary and recent.js always sent
 	// an empty string (#817).
 	Mime string `json:"mime,omitempty"`
+	// DurationSec is the length of CardURL for a media-server file, 0 when
+	// unknown. A replay passes it to PlayURL so the speaker reports a total
+	// and the progress bar shows, as it does for a Library play (#845).
+	DurationSec int `json:"durationSec,omitempty"`
 }
 
 // RecentPlayed reads one box's recently-played ring (GET /api/recent),

@@ -55,6 +55,12 @@ type Entry struct {
 	Track    string `json:"track,omitempty"`    // song / track title; empty for stations without ICY
 	Account  string `json:"account,omitempty"`  // sourceAccount (e.g. which Spotify account)
 	Homepage string `json:"homepage,omitempty"` // station website, for the "website" link (radio)
+	// DurationSec is the length of the replay target (CardURL) for a
+	// network-library file, 0 when unknown (radio, Spotify, rows written before
+	// it existed). A replay hands it to the speaker the way a Library play does;
+	// without it the speaker reports no total and the app draws no progress bar
+	// (#845).
+	DurationSec int `json:"durationSec,omitempty"`
 }
 
 // Store is the in-RAM ring plus its debounced NAND backing file.
@@ -166,6 +172,9 @@ func (s *Store) Add(e Entry) {
 				}
 				if last.Homepage == "" && e.Homepage != "" {
 					last.Homepage = e.Homepage
+				}
+				if last.DurationSec == 0 && e.DurationSec > 0 {
+					last.DurationSec = e.DurationSec
 				}
 				s.markDirtyLocked()
 				return
