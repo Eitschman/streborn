@@ -118,6 +118,69 @@ func (s *Server) fillLibraryPresetLength(p *presets.Preset) bool {
 	return true
 }
 
+// Bounds on a length learned from where a track froze. A frozen position
+// under learnedLengthMin is far more likely a stream that never really got
+// going than a song; one over learnedLengthMax is no song either. Both are
+// left unlearned, and the frozen-position net keeps ending those plays.
+const (
+	learnedLengthMin = 5 * time.Second
+	learnedLengthMax = 4 * time.Hour
+)
+
+// learnSingleTrackLength runs when the end watch of a lone file decided the
+// track is over (#978). A music-library song saved on a key before v1.0.11
+// carries no length, so every press of that key ends only on the
+// frozen-position net, 15 s after the song has actually finished. The position
+// the box froze on IS the song's length, so it is remembered for this agent
+// run and written once into every library key that holds this file without a
+// length. The next press of such a key ends on time and never comes back here
+// (its dur is no longer 0).
+//
+// Only the frozen-position net teaches: the wall-clock net needs a length to
+// fire, and a known one is not relearned. One store write covers every
+// matching key, and nothing is written when no key needs it.
+func (s *Server) learnSingleTrackLength(tr singleTrack, net endNet, lastPos time.Duration) {
+	if net != endNetFrozen || tr.dur > 0 || tr.boxURL == "" {
+		return
+	}
+	if lastPos < learnedLengthMin || lastPos > learnedLengthMax {
+		s.logger.Info("single track: not learning a length from where it froze, the position is implausible",
+			"title", tr.title, "posSec", int(lastPos.Seconds()))
+		return
+	}
+	s.trackLens.put(tr.boxURL, lastPos)
+	if s.presets == nil {
+		return
+	}
+	sec := int(lastPos / time.Second)
+	var fill []presets.Preset
+	for _, p := range s.presets.All() {
+		if p.StreamURL != tr.boxURL || p.DurationSec != 0 || libraryFileMime(p) == "" {
+			continue
+		}
+		p.DurationSec = sec
+		fill = append(fill, p)
+	}
+	if len(fill) == 0 {
+		s.logger.Info("single track: learned its length from where it froze",
+			"title", tr.title, "trackSec", sec, "keysUpdated", 0)
+		return
+	}
+	slots := make([]int, 0, len(fill))
+	for _, p := range fill {
+		slots = append(slots, p.Slot)
+	}
+	if err := s.presets.SetSlots(fill); err != nil {
+		// The learned length still serves this agent run (libraryPresetLength
+		// falls back to it); only a restart forgets it again.
+		s.logger.Warn("single track: could not store the learned length on its keys",
+			"title", tr.title, "trackSec", sec, "slots", slots, "err", err)
+		return
+	}
+	s.logger.Info("single track: learned its length from where it froze and stored it on its keys",
+		"title", tr.title, "trackSec", sec, "slots", slots)
+}
+
 // trackLengthsCap bounds the learned lengths. A household plays a few dozen
 // files a day at most; the oldest entry goes first.
 const trackLengthsCap = 64

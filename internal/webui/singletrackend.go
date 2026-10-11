@@ -211,6 +211,7 @@ func (s *Server) watchOneSingleTrackPlay(tr singleTrack, gen uint64) bool {
 		// off (#1065).
 		in := s.trackEndSnapshot(sawPlay, ps, start, tr.dur, obsTotal, lastPos, lastPosAt)
 		if net := trackEndNet(in); net != endNetNone {
+			s.learnSingleTrackLength(tr, net, lastPos)
 			return s.finishSingleTrack(title, net.why(), lastPos, end)
 		}
 	}
