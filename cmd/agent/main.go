@@ -993,6 +993,18 @@ func run() error {
 	// reconcile loop sleeps before its first pass, so wiring it here is early
 	// enough.
 	quietWakeEpisodeActive = webuiSrv.QuietWakeEpisodeActive
+	// ... and whether this speaker follows a group or stereo pair: its
+	// firmware refuses every preset write while it does (#1077).
+	groupFollowerFn = func() (bool, string) {
+		master, _, ok := margeSrv.GroupPair()
+		if decided, follower := pairRole(master, margeSrv.DeviceID(), ok); decided {
+			if follower {
+				return true, "stereo pair follower"
+			}
+			return false, ""
+		}
+		return webuiSrv.GroupFollower()
+	}
 
 	// Re-assert a persisted multiroom group (native or mirror) so it survives
 	// reboot/standby/Wi-Fi outage without the user re-grouping (#70 beta).
