@@ -64,6 +64,8 @@ func TestFetchJSONMirrorFailover(t *testing.T) {
 		// wantErrContains must appear in the error text (the raw mirror
 		// detail kept behind the stable marker). Only checked with wantErr.
 		wantErrContains string
+		// wantErrAlso is a second fragment that must appear as well.
+		wantErrAlso string
 		// wantNames is the decoded station list on success.
 		wantNames []string
 		// wantHits is the expected request count per mirror, in list order.
@@ -100,8 +102,10 @@ func TestFetchJSONMirrorFailover(t *testing.T) {
 				{status: http.StatusBadGateway, body: "bad gateway"},
 			},
 			wantErr: true,
-			// lastErr is the LAST mirror's failure.
-			wantErrContains: ": 502:",
+			// lastErr is the LAST mirror's failure, and the message says
+			// every mirror was tried, not just that one (#1065).
+			wantErrContains: "all 2 mirrors failed (last: mirror ",
+			wantErrAlso:     ": 502:",
 			wantHits:        []int{1, 1},
 			wantFront:       0,
 		},
@@ -158,6 +162,9 @@ func TestFetchJSONMirrorFailover(t *testing.T) {
 				}
 				if tc.wantErrContains != "" && !strings.Contains(err.Error(), tc.wantErrContains) {
 					t.Errorf("error %q does not contain %q", err, tc.wantErrContains)
+				}
+				if tc.wantErrAlso != "" && !strings.Contains(err.Error(), tc.wantErrAlso) {
+					t.Errorf("error %q does not contain %q", err, tc.wantErrAlso)
 				}
 			} else {
 				if err != nil {

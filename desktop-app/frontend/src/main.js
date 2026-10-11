@@ -284,6 +284,7 @@ import {
   queueRecallConfirmed,
   queueReplyMerge,
   agentCurrentEngineMissing,
+  searchErrorText,
   STEREO_ICON,
   GROUP_ICON,
 } from './utils.js';
@@ -9082,7 +9083,7 @@ async function fetchSearchPage(append) {
     renderSearchResults();
     $('loadMoreRow').classList.toggle('hidden', page.length < PAGE_SIZE);
   } catch (e) {
-    $('searchResults').innerHTML = `<div class="muted">${escapeHtml(t('common.error'))}: ${escapeHtml(e.message)}</div>`;
+    $('searchResults').innerHTML = `<div class="muted">${escapeHtml(searchErrorText(e))}</div>`;
     $('loadMoreRow').classList.add('hidden');
   }
 }

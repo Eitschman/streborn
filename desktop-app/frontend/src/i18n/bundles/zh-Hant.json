@@ -326,7 +326,7 @@
   "speaker.needsInstallBadge": "可安裝 STR",
   "speaker.stockTooltip": "原廠 Bose 韌體。STR 能把這台喇叭的網路電台和預設找回來。",
   "speaker.offlineTooltip": "離線，最後出現在 {{ago}}。點一下重新搜尋。",
-  "radio.mirrorsDown": "電台目錄暫時連不上。請檢查你的網路連線，等一下再試一次。",
+  "radio.mirrorsDown": "電台目錄（radio-browser.info）目前沒有回應。這是對方的問題；你已儲存的電台仍可照常播放。請稍後再搜尋一次。",
   "speaker.stockConfirmTitle": "用 STR 讓這台喇叭活過來？",
   "speaker.stockConfirmBody": "<b>{{label}}</b> 還在跑原廠 Bose 韌體。STR 直接透過你的網路安裝，不用 USB 隨身碟。裝好之後，你就能完全在這個應用程式裡控制它：網路電台、預設、多房間。<br><br>要繼續安裝嗎？",
   "speaker.stockConfirmCta": "前往安裝",

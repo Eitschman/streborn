@@ -704,6 +704,7 @@ func (c *Client) fetchJSON(ctx context.Context, path string, out any) error {
 	c.mu.Unlock()
 
 	var lastErr error
+	tried := 0
 	for i, base := range mirrors {
 		// Outer ctx cancelled (handler timeout fired, client went
 		// away): stop trying further mirrors.
@@ -713,6 +714,7 @@ func (c *Client) fetchJSON(ctx context.Context, path string, out any) error {
 			}
 			break
 		}
+		tried++
 		err := c.tryMirror(ctx, base, path, out)
 		if err == nil {
 			// Success: move the mirror to the front if not already first
@@ -742,6 +744,12 @@ func (c *Client) fetchJSON(ctx context.Context, path string, out any) error {
 	// last-resort IP like https://91.98.4.78 plus a status body) read like
 	// something broken or suspicious to users (field 2026-07-26). The
 	// frontend maps the marker to a localized message; logs keep the detail.
+	// With several mirrors tried, say so: naming only the last one read as if
+	// that single mirror were the problem, when every mirror had failed
+	// (radio-browser.info outage, #1065).
+	if tried > 1 {
+		return fmt.Errorf("radio directory unreachable: all %d mirrors failed (last: %w)", tried, lastErr)
+	}
 	return fmt.Errorf("radio directory unreachable: %w", lastErr)
 }
 
