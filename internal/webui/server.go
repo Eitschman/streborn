@@ -831,7 +831,11 @@ type BoxPreset struct {
 // track entry keeps the "website" link target. source is the media server a
 // library folder came from (its friendly name), carried for a queue so a key
 // saved from the live queue says "from <server>" like a star-button save.
-type recentCardCtx struct{ key, name, art, url, account, homepage, mime, source string }
+type recentCardCtx struct {
+	key, name, art, url, account, homepage, mime, source string
+	// durationSec is the length of url when it is a library file, 0 otherwise.
+	durationSec int
+}
 
 // lastPlayInfo is the box-facing URL + metadata of the current stream plus the
 // re-push state. rePushes counts consecutive resume attempts on THIS stream and

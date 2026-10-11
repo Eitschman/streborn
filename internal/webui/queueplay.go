@@ -297,7 +297,13 @@ func (s *Server) startQueueLocked(ctx context.Context, items []queueItem, start 
 		if card.art == "" {
 			card.art = it.Art
 		}
-		s.recentNoteQueueCard(card.key, card.name, card.art, card.url, it.Mime)
+		// The stored length belongs to the replay URL: the first track's own
+		// length only when the card falls back to it.
+		cardDur := 0
+		if card.url == it.URL {
+			cardDur = int(it.Duration / time.Second)
+		}
+		s.recentNoteQueueCard(card.key, card.name, card.art, card.url, it.Mime, cardDur)
 	} else {
 		s.recentClearQueueCard()
 	}

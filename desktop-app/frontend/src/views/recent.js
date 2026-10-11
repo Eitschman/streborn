@@ -114,6 +114,7 @@ function groupRecentCards(entries) {
     const last = cards[cards.length - 1];
     if (last && last.boxKey === e._boxKey && last.cardKey === e.cardKey) {
       if (!last.homepage && e.homepage) last.homepage = e.homepage;
+      if (!last.durationSec && e.durationSec > 0) last.durationSec = e.durationSec;
       // Dedup repeated titles within a session. Many stations flip the ICY title
       // between the song and talk/promo/contact lines (SWR3: "TALK mit ...",
       // "Kontakt zu SWR3: ..."), which otherwise fills the card with the same few
@@ -134,7 +135,7 @@ function groupRecentCards(entries) {
     cards.push({
       boxKey: e._boxKey, box: e._box, boxName: e._boxName,
       source: e.source, cardKey: e.cardKey, name: e.cardName,
-      art: e.cardArt, url: e.cardURL, mime: e.mime, account: e.account, ts: e.ts,
+      art: e.cardArt, url: e.cardURL, mime: e.mime, durationSec: e.durationSec || 0, account: e.account, ts: e.ts,
       homepage: e.homepage || '', playSlot,
       tracks: e.track ? [{ track: e.track, ts: e.ts }] : [],
       _seen: seen,
@@ -340,6 +341,16 @@ async function replayFolderCard(c, box) {
   }
 }
 
+// replayLibraryTrack plays a network-library card's stored file directly, with
+// its MIME and its length. The length is what makes the speaker report a total,
+// so without it a replayed track showed no progress bar while the same track
+// from the Library did (#845). 0 (a card recorded before the length was kept)
+// still plays, just without the bar.
+async function replayLibraryTrack(c, box, art) {
+  const dur = c.durationSec > 0 ? Math.round(c.durationSec) : 0;
+  await PlayURL(box.host, box.port, c.url, c.name || '', art, '', c.mime || '', '', '', dur);
+}
+
 function wireCard(c, i) {
   const playBtn = document.getElementById('recPlay' + i);
   const pickBtn = document.getElementById('recPick' + i);
@@ -373,9 +384,7 @@ function wireCard(c, i) {
           // indicator sitting amber (#978). Falls back to the single track when
           // the speaker's agent is older than the endpoint.
           if (await replayFolderCard(c, box)) return;
-          // 0: a Recently-played card stores no duration, so a replay still
-          // draws no bar. Tracked with the rest of the replay gap in #817.
-          await PlayURL(box.host, box.port, c.url, c.name || '', art, '', c.mime || '', '', '', 0);
+          await replayLibraryTrack(c, box, art);
           showToast(t('recent.playing', { name: c.name || '' }));
         } else {
           await deps.playStation(cardStation(c));

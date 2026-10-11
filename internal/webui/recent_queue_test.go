@@ -16,7 +16,7 @@ func TestRecentQueueCardRecordsFolderAndTracks(t *testing.T) {
 
 	// startQueue notes the folder card, then the first push records the first
 	// track (which folds into the card placeholder), then auto-advance records more.
-	s.recentNoteQueueCard("queue:srv:42", "Jazz", "art.png", "http://nas/1.mp3", "audio/flac")
+	s.recentNoteQueueCard("queue:srv:42", "Jazz", "art.png", "http://nas/1.mp3", "audio/flac", 0)
 	s.recentNoteQueueTrack("Song A", "")
 	s.recentNoteQueueTrack("Song B", "")
 
@@ -60,7 +60,7 @@ func TestRecentQueueCardRecordsFolderAndTracks(t *testing.T) {
 // playlist too. A track without an artist keeps the bare title.
 func TestRecentQueueTrackFilesArtistFirst(t *testing.T) {
 	s := &Server{recent: recent.New()}
-	s.recentNoteQueueCard("queue:srv:7", "Classic Rock Collection", "", "http://nas/1.mp3", "audio/mpeg")
+	s.recentNoteQueueCard("queue:srv:7", "Classic Rock Collection", "", "http://nas/1.mp3", "audio/mpeg", 0)
 	s.recentNoteQueueTrack("Synchronicity I", "The Police")
 	s.recentNoteQueueTrack("Untitled", "")
 
@@ -91,7 +91,32 @@ func TestQueueItemsCarryArtist(t *testing.T) {
 // recent store (dev builds), never panicking.
 func TestRecentQueueCardNilStore(t *testing.T) {
 	s := &Server{}
-	s.recentNoteQueueCard("k", "n", "a", "u", "")
+	s.recentNoteQueueCard("k", "n", "a", "u", "", 0)
 	s.recentNoteQueueTrack("t", "")
 	s.recentClearQueueCard()
+}
+
+// TestRecentLibraryCardKeepsLength covers #845: a library file's length rides
+// on its Recently-played card, and on every folder track row under it, so a
+// replay from the card can hand it to the speaker and the progress bar shows.
+func TestRecentLibraryCardKeepsLength(t *testing.T) {
+	s := &Server{recent: recent.New()}
+	s.recentNoteLibraryCard("http://nas/a.flac", "Song", "", "http://nas/a.flac", "audio/flac", 245)
+	if all := s.recent.All(); len(all) != 1 || all[0].DurationSec != 245 {
+		t.Fatalf("single library play lost its length: %+v", all)
+	}
+
+	q := &Server{recent: recent.New()}
+	q.recentNoteQueueCard("queue:srv:9", "Jazz", "", "http://nas/1.mp3", "audio/mpeg", 180)
+	q.recentNoteQueueTrack("Song A", "")
+	q.recentNoteQueueTrack("Song B", "")
+	all := q.recent.All()
+	if len(all) != 2 {
+		t.Fatalf("want 2 folder rows, got %+v", all)
+	}
+	for _, e := range all {
+		if e.DurationSec != 180 {
+			t.Fatalf("folder row lost the replay URL's length: %+v", e)
+		}
+	}
 }
