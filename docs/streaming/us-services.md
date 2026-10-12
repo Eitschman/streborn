@@ -117,6 +117,30 @@ the error is passed back, and linking in the Bose app is the way.
 The password goes straight from the request to the speaker's `:8090` API
 and is never written or logged by STR.
 
+## Starting a station without the Bose app
+
+Confirmed end to end on 2026-10-11 by a SoundTouch 30 owner outside the US
+(region set to United States in STR, the speaker routed through a US VPN on
+the router): account linked with `POST /api/pandora/account` above, the
+station list read from the speaker, one station started, then held on a
+preset key, which STR stored and which plays from the key since.
+
+The Bose app used to browse the stations. Without it, two calls to the
+speaker's own API do the same (Pandora; iHeartRadio untested):
+
+```
+# list the account's stations
+curl -s -X POST   -d '<navigate source="PANDORA" sourceAccount="you@example.com" menu="radioStations" sort="dateCreated"><startItem>1</startItem><numItems>50</numItems></navigate>'   http://192.0.2.1:8090/navigate
+
+# start one: send a <ContentItem ...>...</ContentItem> block from that answer as it is
+curl -s -X POST -d '<ContentItem ...>...</ContentItem>' http://192.0.2.1:8090/select
+```
+
+`sourceAccount` is the account the speaker lists for `PANDORA` in
+`:8090/sources`. Once a station plays, holding a preset key on the speaker
+stores it (see Presets below). The STR app does both steps itself (see
+"In the STR app").
+
 ## Presets
 
 A Pandora or iHeartRadio station can live on preset keys 1 to 6
