@@ -958,11 +958,9 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  # 2c-bis. Native Linux ARM64 desktop; independent of the existing x86_64 job. Pinned to
-  # ubuntu-22.04 deliberately — its libwebkit2gtk-4.1 and libsoup
-  # versions are present on Ubuntu 22.04+ / Debian 12+ / Fedora 38+
-  # / current Arch. Building on ubuntu-24.04 would link against a
-  # newer libwebkit that's missing on common LTS distros.
+  # 2c-bis. Native Linux ARM64 desktop build on GitHub-hosted ARM64 runners.
+  # Keep the existing x86_64 job untouched; use the same embedded release
+  # payloads, version stamp, package contents, checksums and attestation.
   build-desktop-linux-arm64:
     needs: [build-agent, build-go-librespot]
     runs-on: ubuntu-24.04-arm
@@ -979,11 +977,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          # Pinned, not "stable": the hosted runners moved to Go 1.27.0 on
-          # 2026-08-21 and the pinned wails CLI v2.12.0 dies under it with
-          # `internal error: package "embed" without types` before compiling
-          # anything. 1.26.x is the combination every release up to v0.9.52
-          # shipped with. Lift the pin together with a tested wails CLI bump.
+          # Match the desktop module's Go toolchain; Wails 2.16 is needed
+          # for the tested native ARM64 build.
           go-version: "1.26.x"
           cache: true
 
