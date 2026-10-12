@@ -148,7 +148,15 @@ func updateAssetKey() string {
 // the .dmg stays the fallback for releases built before the zip existed and for
 // installations that cannot self-replace anyway.
 func updateAssetKeys() []string {
-	switch runtime.GOOS {
+	return updateAssetKeysFor(runtime.GOOS, runtime.GOARCH)
+}
+
+// updateAssetKeysFor is updateAssetKeys for a given OS and architecture. Linux
+// has one archive per architecture, and an ARM64 app must never fall back to
+// the x86_64 one: it would swap itself for a binary its machine cannot run. A
+// release without the ARM64 archive then offers no update at all.
+func updateAssetKeysFor(goos, goarch string) []string {
+	switch goos {
 	case "windows":
 		return []string{"desktop_windows"}
 	case "darwin":
@@ -159,6 +167,9 @@ func updateAssetKeys() []string {
 		// anything is downloaded, and it used to leave no trace at all.
 		return []string{"desktop_macos"}
 	case "linux":
+		if goarch == "arm64" {
+			return []string{"desktop_linux_arm64"}
+		}
 		return []string{"desktop_linux"}
 	}
 	return nil
