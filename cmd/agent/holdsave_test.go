@@ -27,6 +27,9 @@ type holdRig struct {
 	during func()
 	result webui.HoldSaved
 	err    error
+	// checks are the armed one-shot unpaired checks (holdSaver.after).
+	checks      []func()
+	checkDelays []time.Duration
 }
 
 func newHoldRig(t *testing.T) *holdRig {
@@ -48,7 +51,26 @@ func newHoldRig(t *testing.T) *holdRig {
 		r.now = r.now.Add(d)
 	}
 	r.hs.spawn = func(f func()) { f() }
+	r.hs.after = func(d time.Duration, f func()) {
+		r.mu.Lock()
+		r.checks = append(r.checks, f)
+		r.checkDelays = append(r.checkDelays, d)
+		r.mu.Unlock()
+	}
 	return r
+}
+
+// fireChecks runs the armed unpaired checks as if their timers fired at
+// press + holdUnpairedCheckAfter.
+func (r *holdRig) fireChecks() {
+	r.mu.Lock()
+	fs := r.checks
+	r.checks = nil
+	r.mu.Unlock()
+	r.now = r.now.Add(holdUnpairedCheckAfter)
+	for _, f := range fs {
+		f()
+	}
 }
 
 func (r *holdRig) at(ms int) time.Time { return r.now.Add(time.Duration(ms) * time.Millisecond) }
@@ -255,5 +277,89 @@ func TestOnKeyEventFeedsHoldSaver(t *testing.T) {
 	}
 	if presetKeySlot("PRESET_7") != 0 || presetKeySlot("PLAY") != 0 || presetKeySlot("PRESET_6") != 6 {
 		t.Fatal("presetKeySlot maps the wrong keys")
+	}
+}
+
+// TestHoldSaveUnpairedPressLeavesTrace: the #1217 field case. A physical
+// press of key 3 for which no hold verdict ever arrives must leave one INFO
+// line naming the slot once the pair window has passed.
+func TestHoldSaveUnpairedPressLeavesTrace(t *testing.T) {
+	r := newHoldRig(t)
+	r.press("PRESET_3", boxlog.ProducerConsole, boxlog.OriginStats, 0)
+	if len(r.checks) != 1 || r.checkDelays[0] != holdUnpairedCheckAfter {
+		t.Fatalf("armed checks = %d (%v), want one at %v", len(r.checks), r.checkDelays, holdUnpairedCheckAfter)
+	}
+	r.fireChecks()
+	out := r.log.String()
+	if !strings.Contains(out, "level=INFO msg=\"hold-to-save: no hold verdict paired\"") ||
+		!strings.Contains(out, "slot=3") || !strings.Contains(out, "lastVerdict=none") ||
+		!strings.Contains(out, "lastVerdictAgeMs=-1") {
+		t.Fatalf("missing the unpaired line:\n%s", out)
+	}
+}
+
+// TestHoldSaveUnpairedAfterTapNamesTheTap: a tap reaches the check too, and
+// the line says the newest verdict was a tap and how far after the press.
+func TestHoldSaveUnpairedAfterTapNamesTheTap(t *testing.T) {
+	r := newHoldRig(t)
+	r.press("PRESET_1", boxlog.ProducerIRRemote, boxlog.OriginStats, 0)
+	r.gesture(false, 200)
+	r.fireChecks()
+	out := r.log.String()
+	if !strings.Contains(out, "the speaker read a preset key as a tap") || !strings.Contains(out, "pressAgeMs=200") {
+		t.Fatalf("the tap verdict is not logged at INFO with the press age:\n%s", out)
+	}
+	if !strings.Contains(out, "no hold verdict paired") || !strings.Contains(out, "lastVerdict=tap") ||
+		!strings.Contains(out, "lastVerdictAfterPressMs=200") {
+		t.Fatalf("the unpaired line does not name the tap:\n%s", out)
+	}
+}
+
+// TestHoldSavePairedPressStaysQuiet: a press that paired logs the hold
+// verdict and no unpaired line.
+func TestHoldSavePairedPressStaysQuiet(t *testing.T) {
+	r := newHoldRig(t)
+	r.press("PRESET_2", boxlog.ProducerConsole, boxlog.OriginStats, 0)
+	r.gesture(true, 1600)
+	r.fireChecks()
+	out := r.log.String()
+	if !strings.Contains(out, "the speaker read a preset key as a hold") || !strings.Contains(out, "paired=true") {
+		t.Fatalf("the paired hold verdict is not logged:\n%s", out)
+	}
+	if strings.Contains(out, "no hold verdict paired") {
+		t.Fatalf("a paired press logged the unpaired line:\n%s", out)
+	}
+}
+
+// TestHoldSaveVerdictWithoutPressIsInfo: the hold verdict that finds no
+// press is logged at INFO now (it was Debug and invisible in #1217), with
+// the newest press and its age when there is a stale one.
+func TestHoldSaveVerdictWithoutPressIsInfo(t *testing.T) {
+	r := newHoldRig(t)
+	r.gesture(true, 0)
+	out := r.log.String()
+	if !strings.Contains(out, "level=INFO msg=\"hold-to-save: the speaker reported a held preset key, no press to pair it with\"") ||
+		!strings.Contains(out, "pressSlot=0") || !strings.Contains(out, "pressAgeMs=-1") {
+		t.Fatalf("missing the unpaired verdict line:\n%s", out)
+	}
+
+	r = newHoldRig(t)
+	r.press("PRESET_6", boxlog.ProducerConsole, boxlog.OriginStats, 0)
+	r.gesture(true, 6000)
+	if out := r.log.String(); !strings.Contains(out, "pressSlot=6") || !strings.Contains(out, "pressAgeMs=6000") {
+		t.Fatalf("the stale press is not named:\n%s", out)
+	}
+}
+
+// TestHoldSaveNoCheckForNetworkKeys: keys sent over :8090/key and releases
+// arm no timer; the check is for human presses only.
+func TestHoldSaveNoCheckForNetworkKeys(t *testing.T) {
+	r := newHoldRig(t)
+	r.press("PRESET_2", boxlog.ProducerGabbo, boxlog.OriginWeb, 0)
+	r.press("PRESET_2", boxlog.ProducerConsole, boxlog.OriginStats, 0)
+	r.hs.NotePress(boxlog.KeyEvent{Name: "PRESET_2", Producer: boxlog.ProducerConsole,
+		State: boxlog.StateReleased, Origin: boxlog.OriginStats, At: r.now})
+	if len(r.checks) != 1 {
+		t.Fatalf("armed checks = %d, want 1 (the physical press only)", len(r.checks))
 	}
 }
