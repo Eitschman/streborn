@@ -46,7 +46,10 @@ jobs:
           make winformat-embed agent-embed
       - name: Build native Linux ARM64 desktop
         working-directory: desktop-app
-        run: wails build -tags webkit2_41 -trimpath -clean -nopackage
+        run: |
+          APP_VERSION="$(git describe --tags --abbrev=0 2>/dev/null || echo v1.0.12)"
+          echo "Building ST Reborn ${APP_VERSION}"
+          wails build -tags webkit2_41 -ldflags "-X main.appVersion=${APP_VERSION} -X main.appBuild=${GITHUB_SHA::7}" -trimpath -clean -nopackage
       - name: Package binary
         run: |
           mkdir -p dist
