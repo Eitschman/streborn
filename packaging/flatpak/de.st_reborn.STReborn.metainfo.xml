@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>de.st_reborn.STReborn</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>ST Reborn</name>
+  <summary>Revive Bose SoundTouch speakers without the Bose cloud</summary>
+  <developer id="de.st_reborn">
+    <name>Jens Roggenfelder</name>
+  </developer>
+  <description>
+    <p>
+      Bose shut down the SoundTouch cloud in May 2026, and SoundTouch speakers
+      lost their internet radio, presets and remote control with it. ST Reborn
+      brings them back, with no Bose cloud involved.
+    </p>
+    <ul>
+      <li>Internet radio from a directory of thousands of stations</li>
+      <li>The six preset keys on the speaker and the remote work again</li>
+      <li>Spotify, music from your own media server, and groups of speakers</li>
+      <li>Installs a small agent onto your speakers over your home network</li>
+    </ul>
+    <p>
+      ST Reborn is an unofficial, community-built project. It is not affiliated
+      with, endorsed by or authorized by Bose. SoundTouch and Bose are
+      registered trademarks of Bose Corporation.
+    </p>
+  </description>
+  <launchable type="desktop-id">de.st_reborn.STReborn.desktop</launchable>
+  <url type="homepage">https://st-reborn.de</url>
+  <url type="bugtracker">https://github.com/JRpersonal/streborn/issues</url>
+  <url type="vcs-browser">https://github.com/JRpersonal/streborn</url>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+  </categories>
+  <releases>
+    <release version="1.0.12" date="2026-10-11"/>
+  </releases>
+</component>
