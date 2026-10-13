@@ -149,10 +149,10 @@ made from the release.
    accepted, Flathub's developer portal hands out a token that goes into
    `https://st-reborn.de/.well-known/org.flathub.VerifiedApps.txt` (website
    repository) to get the verified checkmark.
-2. **Screenshots.** Flathub requires at least one in the metainfo, as a
-   stable https URL (for example an image on st-reborn.de). Add a
-   `<screenshots>` block to `de.st_reborn.STReborn.metainfo.xml` before
-   submitting.
+2. **Screenshots.** The metainfo points at `docs/screenshots/en/` through
+   raw.githubusercontent.com URLs pinned to a commit, so they never move.
+   Flathub mirrors them at build time. Newer screenshots: commit them, then
+   bump the commit in the URLs.
 3. **aarch64.** Uncomment the arm64 source in the manifest with the first
    release that carries `STR-Linux-arm64.tar.gz`.
 4. Fork https://github.com/flathub/flathub, branch off `new-pr`, add the

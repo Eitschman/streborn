@@ -27,6 +27,20 @@
     </p>
   </description>
   <launchable type="desktop-id">de.st_reborn.STReborn.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Presets, playback and the station search</caption>
+      <image>https://raw.githubusercontent.com/JRpersonal/streborn/d6b7ea8666178637a3e3703dcbe7c974f3fc427d/docs/screenshots/en/app-listen.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Finding internet radio stations</caption>
+      <image>https://raw.githubusercontent.com/JRpersonal/streborn/d6b7ea8666178637a3e3703dcbe7c974f3fc427d/docs/screenshots/en/app-search.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Playing music from a media server on the network</caption>
+      <image>https://raw.githubusercontent.com/JRpersonal/streborn/d6b7ea8666178637a3e3703dcbe7c974f3fc427d/docs/screenshots/en/app-library.png</image>
+    </screenshot>
+  </screenshots>
   <url type="homepage">https://st-reborn.de</url>
   <url type="bugtracker">https://github.com/JRpersonal/streborn/issues</url>
   <url type="vcs-browser">https://github.com/JRpersonal/streborn</url>
