@@ -148,14 +148,16 @@ func updateAssetKey() string {
 // the .dmg stays the fallback for releases built before the zip existed and for
 // installations that cannot self-replace anyway.
 func updateAssetKeys() []string {
-	return updateAssetKeysFor(runtime.GOOS, runtime.GOARCH)
+	return updateAssetKeysFor(runtime.GOOS, runtime.GOARCH, linuxPackage())
 }
 
 // updateAssetKeysFor is updateAssetKeys for a given OS and architecture. Linux
 // has one archive per architecture, and an ARM64 app must never fall back to
 // the x86_64 one: it would swap itself for a binary its machine cannot run. A
-// release without the ARM64 archive then offers no update at all.
-func updateAssetKeysFor(goos, goarch string) []string {
+// release without the ARM64 archive then offers no update at all. A copy the
+// .deb installed updates from the next .deb only (see linuxpkg.go), and a
+// Flathub copy downloads nothing.
+func updateAssetKeysFor(goos, goarch, pkg string) []string {
 	switch goos {
 	case "windows":
 		return []string{"desktop_windows"}
@@ -167,6 +169,15 @@ func updateAssetKeysFor(goos, goarch string) []string {
 		// anything is downloaded, and it used to leave no trace at all.
 		return []string{"desktop_macos"}
 	case "linux":
+		switch pkg {
+		case linuxPkgFlatpak:
+			return nil
+		case linuxPkgDeb:
+			if goarch == "arm64" {
+				return []string{"desktop_linux_arm64_deb"}
+			}
+			return []string{"desktop_linux_deb"}
+		}
 		if goarch == "arm64" {
 			return []string{"desktop_linux_arm64"}
 		}
@@ -191,7 +202,11 @@ func canSelfReplace() bool {
 		// Same question macOS asks, for the same reason: a binary installed
 		// into /opt or /usr/local by root cannot be swapped by the user running
 		// it, and finding that out only when the rename fails means the user
-		// has already sat through a download and pressed Install.
+		// has already sat through a download and pressed Install. A .deb or
+		// Flathub copy belongs to its package manager (linuxpkg.go).
+		if linuxPackage() != linuxPkgNone {
+			return false
+		}
 		exe, err := os.Executable()
 		if err != nil {
 			return false
@@ -342,6 +357,10 @@ func (a *App) DownloadUpdate(version string) (string, error) {
 		a.logger.Info("app update: winget-managed install, not downloading", "version", version)
 		return "", errWingetManaged
 	}
+	if linuxPackage() == linuxPkgFlatpak {
+		a.logger.Info("app update: Flathub install, not downloading", "version", version)
+		return "", errFlatpakManaged
+	}
 	started := time.Now()
 	a.logger.Info("app update: download starting, looking up the release", "version", version)
 	asset, err := a.ResolveUpdateAsset(version)
@@ -473,6 +492,9 @@ func assetExt() string {
 	case "darwin":
 		return ".dmg"
 	default:
+		if linuxPackage() == linuxPkgDeb {
+			return ".deb"
+		}
 		return ".tar.gz"
 	}
 }
@@ -490,6 +512,13 @@ func (a *App) ApplyUpdate(downloadedPath string) error {
 	if _, managed := wingetManagedExe(); managed {
 		a.logger.Info("app update: winget-managed install, refusing the in-place swap", "file", downloadedPath)
 		return errWingetManaged
+	}
+	switch linuxPackage() {
+	case linuxPkgFlatpak:
+		a.logger.Info("app update: Flathub install, refusing the in-place swap", "file", downloadedPath)
+		return errFlatpakManaged
+	case linuxPkgDeb:
+		return a.applyLinuxDeb(downloadedPath)
 	}
 	switch runtime.GOOS {
 	case "darwin":
@@ -598,6 +627,18 @@ func (a *App) applyLinux(tgz string) error {
 	_ = os.Chmod(exe, 0o755)
 	a.relaunchAndQuit(exe)
 	return nil
+}
+
+// applyLinuxDeb hands the downloaded .deb to the system's package installer
+// (GNOME Software, Discover, gdebi, whatever opens .deb files here), which asks
+// for the password and upgrades the package over the running copy. The user
+// starts the new version afterwards; the banner says so.
+func (a *App) applyLinuxDeb(deb string) error {
+	if !strings.HasSuffix(strings.ToLower(deb), ".deb") {
+		return fmt.Errorf("expected a .deb for this installation, got %s", filepath.Base(deb))
+	}
+	a.logger.Info("app update: handing the .deb to the package installer", "file", deb)
+	return exec.Command("xdg-open", deb).Start()
 }
 
 // relaunchAndQuit launches the replaced binary AFTER this process has fully

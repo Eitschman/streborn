@@ -1313,6 +1313,8 @@
   "banner.installNow": "Şimdi kur",
   "banner.installing": "Kuruluyor...",
   "banner.macDownloaded": "İndirildi ve doğrulandı. .dmg dosyasını aç ve ST Reborn'u Uygulamalar klasörüne sürükle, eskisinin yerine koy.",
+  "banner.flatpakUpdate": "Yazılım merkezinden ya da şu komutla güncelle: flatpak update",
+  "banner.debHandoff": "Güncelleme paket yükleyicide açıldı. Orada onayla, ardından ST Reborn'u yeniden başlat.",
   "banner.macReadyTitle": "Neredeyse bitti.",
   "banner.macShowFile": "Dosyayı göster",
   "banner.openWebsite": "Web sitesinden indir",

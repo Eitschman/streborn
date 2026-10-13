@@ -1313,6 +1313,8 @@
   "banner.installNow": "Zainstaluj teraz",
   "banner.installing": "Instalowanie...",
   "banner.macDownloaded": "Pobrano i zweryfikowano. Otwórz plik .dmg i przeciągnij ST Reborn do folderu Aplikacje, zastępując starą wersję.",
+  "banner.flatpakUpdate": "Zaktualizuj w centrum oprogramowania lub poleceniem: flatpak update",
+  "banner.debHandoff": "Aktualizacja jest otwarta w instalatorze pakietów. Potwierdź ją tam, a potem uruchom ST Reborn ponownie.",
   "banner.macReadyTitle": "Prawie gotowe.",
   "banner.macShowFile": "Pokaż plik",
   "banner.openWebsite": "Pobierz ze strony",

@@ -275,6 +275,8 @@
   "banner.connecting": "Verbinden...",
   "banner.installing": "Wird installiert...",
   "banner.macDownloaded": "Heruntergeladen und geprüft. Öffne die .dmg und ziehe ST Reborn in den Programme-Ordner, ersetze die alte Version.",
+  "banner.flatpakUpdate": "Aktualisiere es in deiner Softwareverwaltung oder mit: flatpak update",
+  "banner.debHandoff": "Das Update ist in deiner Paketinstallation geöffnet. Bestätige es dort und starte ST Reborn danach neu.",
   "banner.macReadyTitle": "Fast fertig.",
   "banner.macShowFile": "Datei zeigen",
   "banner.updateFailed": "Update fehlgeschlagen: {{err}}",

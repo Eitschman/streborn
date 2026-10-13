@@ -1423,12 +1423,17 @@ async function checkAppUpdate(manual) {
     // A copy winget installed updates through winget (see wingetupdate.js), and
     // the button says so before it is pressed.
     const viaWinget = !!(state.appInfo && state.appInfo.installedViaWinget);
+    // A Flathub copy is updated by the software center, so the banner names
+    // the version and says where to get it, with no button (see linuxpkg.go).
+    const viaFlatpak = !!(state.appInfo && state.appInfo.linuxPackage === 'flatpak');
     const installLabel = viaWinget
       ? wingetInstallLabel(t)
       : (isMacOS ? t('banner.downloadAppUpdate') : t('banner.installAppNow'));
     banner.innerHTML = `
       <div class="app-update-text"><span class="app-update-icon" aria-hidden="true">&#8593;</span><span><b>${escapeHtml(t('banner.appUpdateAvail'))}</b> ${escapeHtml(m.version)} &middot; <a href="#" id="appUpdateNotes" class="footer-link">${escapeHtml(t('banner.whatsNew'))}</a></span></div>
-      <button class="btn btn-primary app-update-btn" id="appUpdateBtn">${escapeHtml(installLabel)}</button>
+      ${viaFlatpak
+        ? `<span class="app-update-text">${escapeHtml(t('banner.flatpakUpdate'))}</span>`
+        : `<button class="btn btn-primary app-update-btn" id="appUpdateBtn">${escapeHtml(installLabel)}</button>`}
       <button class="banner-close" id="appUpdateDismiss" aria-label="${escapeAttr(t('banner.dismiss'))}" title="${escapeAttr(t('banner.dismissTitle'))}">&times;</button>
     `;
     banner.classList.remove('hidden');
@@ -1569,6 +1574,15 @@ function showMacHandoff(path) {
   if (rv && path) rv.onclick = () => { RevealUpdateFile(path).catch(() => {}); };
 }
 
+function showDebHandoff() {
+  const banner = $('appUpdateBanner');
+  if (!banner) { showToast(t('banner.debHandoff'), 12000); return; }
+  banner.innerHTML = `
+    <div class="app-update-text"><span class="app-update-icon" aria-hidden="true">&#10003;</span><span>${escapeHtml(t('banner.debHandoff'))}</span></div>
+  `;
+  banner.classList.remove('hidden');
+}
+
 // wingetNoteHTML renders a winget note for the update banner: the text and,
 // when there is one, the command to run by hand with a Copy button.
 function wingetNoteHTML(view) {
@@ -1623,7 +1637,8 @@ async function runAppUpdate(version, btn, installLabel, isMacOS, fallbackUrl) {
     const path = await DownloadUpdate(version);
     btn.textContent = t('banner.installing');
     await ApplyUpdate(path);
-    // Reached only on macOS (Linux/Windows relaunch+quit inside ApplyUpdate).
+    // Reached only on macOS and for a Linux .deb copy (Linux/Windows otherwise
+    // relaunch+quit inside ApplyUpdate).
     //
     // The last step is the user's: drag the app out of the mounted .dmg. Saying
     // that in a toast did not work, because ApplyUpdate opens the .dmg and
@@ -1636,6 +1651,10 @@ async function runAppUpdate(version, btn, installLabel, isMacOS, fallbackUrl) {
       btn.disabled = false;
       btn.textContent = installLabel;
       showMacHandoff(path);
+    } else if (state.appInfo && state.appInfo.linuxPackage === 'deb') {
+      // A .deb copy: ApplyUpdate opened the package installer, which does the
+      // rest. The user confirms there and starts the new version.
+      showDebHandoff();
     }
   } catch (e) {
     btn.disabled = false;

@@ -1313,6 +1313,8 @@
   "banner.installNow": "Nu installeren",
   "banner.installing": "Wordt geïnstalleerd...",
   "banner.macDownloaded": "Gedownload en geverifieerd. Open de .dmg en sleep ST Reborn naar Programma's, vervang de oude versie.",
+  "banner.flatpakUpdate": "Werk het bij in je softwarecentrum of met: flatpak update",
+  "banner.debHandoff": "De update staat open in je pakketinstallatie. Bevestig hem daar en start ST Reborn daarna opnieuw.",
   "banner.macReadyTitle": "Bijna klaar.",
   "banner.macShowFile": "Bestand tonen",
   "banner.openWebsite": "Van de website downloaden",

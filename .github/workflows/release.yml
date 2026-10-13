@@ -943,10 +943,32 @@ jobs:
           sha256sum "STR-Linux-x64.tar.gz" > "STR-Linux-x64.tar.gz.sha256"
           cat "STR-Linux-x64.tar.gz.sha256"
 
+      # The same binary as a .deb: a double click on Debian, Ubuntu, Mint or
+      # Raspberry Pi OS installs it with its runtime libraries. Installed here
+      # once and checked for missing libraries, so a broken package fails the
+      # build instead of reaching a user.
+      - name: Package as .deb
+        env:
+          VERSION: ${{ needs.build-agent.outputs.version }}
+        run: |
+          sh .github/scripts/build-deb.sh "desktop-app/build/bin/ST Reborn" "${VERSION}" amd64 "release-out/STR-Linux-x64.deb"
+          sudo apt-get install -y "./release-out/STR-Linux-x64.deb"
+          dpkg -L st-reborn
+          if ldd /usr/bin/st-reborn | grep "not found"; then
+            echo "::error::the installed .deb is missing runtime libraries"
+            exit 1
+          fi
+          sudo apt-get remove -y st-reborn
+          cd release-out
+          sha256sum "STR-Linux-x64.deb" > "STR-Linux-x64.deb.sha256"
+          cat "STR-Linux-x64.deb.sha256"
+
       - name: Sigstore attestation
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: release-out/STR-Linux-x64.tar.gz
+          subject-path: |
+            release-out/STR-Linux-x64.tar.gz
+            release-out/STR-Linux-x64.deb
 
       - name: Upload artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -955,6 +977,8 @@ jobs:
           path: |
             release-out/STR-Linux-x64.tar.gz
             release-out/STR-Linux-x64.tar.gz.sha256
+            release-out/STR-Linux-x64.deb
+            release-out/STR-Linux-x64.deb.sha256
           if-no-files-found: error
           retention-days: 90
 
@@ -1134,10 +1158,32 @@ jobs:
           sha256sum "STR-Linux-arm64.tar.gz" > "STR-Linux-arm64.tar.gz.sha256"
           cat "STR-Linux-arm64.tar.gz.sha256"
 
+      # The same binary as a .deb: a double click on Debian, Ubuntu, Mint or
+      # Raspberry Pi OS installs it with its runtime libraries. Installed here
+      # once and checked for missing libraries, so a broken package fails the
+      # build instead of reaching a user.
+      - name: Package as .deb
+        env:
+          VERSION: ${{ needs.build-agent.outputs.version }}
+        run: |
+          sh .github/scripts/build-deb.sh "desktop-app/build/bin/ST Reborn" "${VERSION}" arm64 "release-out/STR-Linux-arm64.deb"
+          sudo apt-get install -y "./release-out/STR-Linux-arm64.deb"
+          dpkg -L st-reborn
+          if ldd /usr/bin/st-reborn | grep "not found"; then
+            echo "::error::the installed .deb is missing runtime libraries"
+            exit 1
+          fi
+          sudo apt-get remove -y st-reborn
+          cd release-out
+          sha256sum "STR-Linux-arm64.deb" > "STR-Linux-arm64.deb.sha256"
+          cat "STR-Linux-arm64.deb.sha256"
+
       - name: Sigstore attestation
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: release-out/STR-Linux-arm64.tar.gz
+          subject-path: |
+            release-out/STR-Linux-arm64.tar.gz
+            release-out/STR-Linux-arm64.deb
 
       - name: Upload artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -1146,6 +1192,8 @@ jobs:
           path: |
             release-out/STR-Linux-arm64.tar.gz
             release-out/STR-Linux-arm64.tar.gz.sha256
+            release-out/STR-Linux-arm64.deb
+            release-out/STR-Linux-arm64.deb.sha256
           if-no-files-found: error
           retention-days: 90
 
@@ -1777,6 +1825,20 @@ jobs:
                 "filename": "STR-Linux-arm64.tar.gz",
                 "runtime_libs": ["libgtk-3-0", "libwebkit2gtk-4.1-0", "libsoup-3.0"]
               },
+              "desktop_linux_deb": {
+                "url": "${BASE}/STR-Linux-x64.deb",
+                "sha256": "$(sha STR-Linux-x64.deb)",
+                "platform": "linux",
+                "arch": "amd64",
+                "filename": "STR-Linux-x64.deb"
+              },
+              "desktop_linux_arm64_deb": {
+                "url": "${BASE}/STR-Linux-arm64.deb",
+                "sha256": "$(sha STR-Linux-arm64.deb)",
+                "platform": "linux",
+                "arch": "arm64",
+                "filename": "STR-Linux-arm64.deb"
+              },
               "agent_armv7l": {
                 "url": "${BASE}/streborn-armv7l",
                 "latest_url": "${LATEST_BASE}/streborn-armv7l",
@@ -1968,6 +2030,8 @@ jobs:
           | macOS desktop app | [STR-macOS.dmg](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/STR-macOS.dmg) |
           | Linux desktop app (x86_64) | [STR-Linux-x64.tar.gz](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/STR-Linux-x64.tar.gz) |
           | Linux desktop app (ARM64) | [STR-Linux-arm64.tar.gz](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/STR-Linux-arm64.tar.gz) |
+          | Linux .deb (Debian, Ubuntu, x86_64) | [STR-Linux-x64.deb](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/STR-Linux-x64.deb) |
+          | Linux .deb (Raspberry Pi OS, ARM64) | [STR-Linux-arm64.deb](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/STR-Linux-arm64.deb) |
           | Stick agent (ARMv7l, real target) | [streborn-armv7l](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/streborn-armv7l) |
           | Stick agent (ARM64, reserve) | [streborn-arm64](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/streborn-arm64) |
           | Stick agent (amd64, test rig) | [streborn-amd64](https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/streborn-amd64) |
@@ -2118,6 +2182,8 @@ jobs:
             dist/STR-macOS.zip
             dist/STR-Linux-x64.tar.gz
             dist/STR-Linux-arm64.tar.gz
+            dist/STR-Linux-x64.deb
+            dist/STR-Linux-arm64.deb
             dist/streborn-armv7l
             dist/streborn-arm64
             dist/streborn-amd64
