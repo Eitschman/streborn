@@ -1313,6 +1313,7 @@
   "banner.installNow": "تثبيت الآن",
   "banner.installing": "جارٍ التثبيت...",
   "banner.macDownloaded": "تم التنزيل والتحقّق. افتح ملف .dmg واسحب ST Reborn إلى Applications، مستبدلًا النسخة القديمة.",
+  "banner.debHandoff": "فُتح التحديث في مثبّت الحزم. أكّده هناك، ثم شغّل ST Reborn من جديد.",
   "banner.macReadyTitle": "أوشكت على الانتهاء.",
   "banner.macShowFile": "إظهار الملف",
   "banner.openWebsite": "التنزيل من الموقع",

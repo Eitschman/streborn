@@ -275,6 +275,7 @@
   "banner.connecting": "連線中...",
   "banner.installing": "安裝中...",
   "banner.macDownloaded": "已下載並驗證。打開 .dmg，把 ST Reborn 拖進「應用程式」並取代舊版。",
+  "banner.debHandoff": "更新已在套件安裝程式中開啟。請在那裡確認，然後重新啟動 ST Reborn。",
   "banner.macReadyTitle": "快好了。",
   "banner.macShowFile": "顯示檔案",
   "banner.updateFailed": "更新失敗：{{err}}",

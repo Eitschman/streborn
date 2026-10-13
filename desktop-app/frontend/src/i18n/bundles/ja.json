@@ -1313,6 +1313,7 @@
   "banner.installNow": "今すぐインストール",
   "banner.installing": "インストール中...",
   "banner.macDownloaded": "ダウンロードと検証が完了しました。.dmgを開き、ST RebornをApplicationsにドラッグして古いものと置き換えてください。",
+  "banner.debHandoff": "更新がパッケージインストーラーで開きました。そこで確認してから、ST Rebornを再起動してください。",
   "banner.macReadyTitle": "あと少しです。",
   "banner.macShowFile": "ファイルを表示",
   "banner.openWebsite": "ウェブサイトからダウンロード",
