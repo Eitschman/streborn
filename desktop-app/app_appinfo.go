@@ -58,10 +58,9 @@ type AppInfo struct {
 	// through winget (UpdateViaWinget) instead of the in-app exe swap, and the
 	// banner says so. See winget.go.
 	InstalledViaWinget bool `json:"installedViaWinget"`
-	// LinuxPackage is "deb" or "flatpak" for a Linux copy a package manager
-	// installed, empty otherwise. A .deb copy hands its update to the system's
-	// package installer, a Flathub copy is updated by the software center, and
-	// the banner says which (see linuxpkg.go).
+	// LinuxPackage is "deb" for a Linux copy the .deb installed, empty
+	// otherwise. Such a copy hands its update to the system's package
+	// installer, and the banner says so (see linuxpkg.go).
 	LinuxPackage string `json:"linuxPackage"`
 	// No agent-binary size here on purpose. It used to be exported so the
 	// frontend could run its own pre-OTA storage check, and that check compared

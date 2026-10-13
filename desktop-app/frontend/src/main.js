@@ -1423,17 +1423,12 @@ async function checkAppUpdate(manual) {
     // A copy winget installed updates through winget (see wingetupdate.js), and
     // the button says so before it is pressed.
     const viaWinget = !!(state.appInfo && state.appInfo.installedViaWinget);
-    // A Flathub copy is updated by the software center, so the banner names
-    // the version and says where to get it, with no button (see linuxpkg.go).
-    const viaFlatpak = !!(state.appInfo && state.appInfo.linuxPackage === 'flatpak');
     const installLabel = viaWinget
       ? wingetInstallLabel(t)
       : (isMacOS ? t('banner.downloadAppUpdate') : t('banner.installAppNow'));
     banner.innerHTML = `
       <div class="app-update-text"><span class="app-update-icon" aria-hidden="true">&#8593;</span><span><b>${escapeHtml(t('banner.appUpdateAvail'))}</b> ${escapeHtml(m.version)} &middot; <a href="#" id="appUpdateNotes" class="footer-link">${escapeHtml(t('banner.whatsNew'))}</a></span></div>
-      ${viaFlatpak
-        ? `<span class="app-update-text">${escapeHtml(t('banner.flatpakUpdate'))}</span>`
-        : `<button class="btn btn-primary app-update-btn" id="appUpdateBtn">${escapeHtml(installLabel)}</button>`}
+      <button class="btn btn-primary app-update-btn" id="appUpdateBtn">${escapeHtml(installLabel)}</button>
       <button class="banner-close" id="appUpdateDismiss" aria-label="${escapeAttr(t('banner.dismiss'))}" title="${escapeAttr(t('banner.dismissTitle'))}">&times;</button>
     `;
     banner.classList.remove('hidden');

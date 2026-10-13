@@ -1,4 +1,4 @@
-# Package managers: winget, Homebrew, .deb and Flathub
+# Package managers: winget, Homebrew and .deb
 
 The desktop app is published to these package managers on top of the GitHub
 release and st-reborn.de:
@@ -8,7 +8,6 @@ release and st-reborn.de:
 | Windows | winget (the Windows Package Manager) | `winget install JRpersonal.STReborn` |
 | macOS | Homebrew, own tap | `brew install --cask jrpersonal/tap/st-reborn` |
 | Debian, Ubuntu, Mint, Raspberry Pi OS | `.deb` on the release | double click, or `sudo apt install ./STR-Linux-x64.deb` |
-| Any Linux | Flathub (once accepted, see below) | `flatpak install flathub de.st_reborn.STReborn` |
 
 After the one-time setup below, every real release updates both by itself
 (job `package-managers` in `.github/workflows/release.yml`). A preview release
@@ -125,45 +124,10 @@ which asks for the password and upgrades the package. It never swaps the
 binary behind dpkg's back. There is no apt repository, so `apt upgrade` does
 not see new versions; the in-app banner is the update path.
 
-## Flathub
+## Flathub, ruled out
 
-The manifest, desktop entry and metainfo live in `packaging/flatpak/`. The
-`flatpak` workflow builds them on every change the way Flathub does, runs
-Flathub's linter and checks the app's libraries against the GNOME runtime;
-its artifact `st-reborn.flatpak` installs with
-`flatpak install --user st-reborn.flatpak` for a test.
-
-The manifest repackages the release tar.gz instead of building from source,
-because the app and the speaker agent it embeds must share one build stamp
-(CLAUDE.md, "Build version stamping"). That is the first thing to explain in
-the submission.
-
-A Flathub copy never downloads its own update: the banner names the new
-version and points to the software center, which installs the build Flathub
-made from the release.
-
-### One-time submission (by hand, not automated)
-
-1. **Domain verification.** The app ID `de.st_reborn.STReborn` is derived
-   from st-reborn.de (the hyphen becomes an underscore). After the app is
-   accepted, Flathub's developer portal hands out a token that goes into
-   `https://st-reborn.de/.well-known/org.flathub.VerifiedApps.txt` (website
-   repository) to get the verified checkmark.
-2. **Screenshots.** The metainfo points at `docs/screenshots/en/` through
-   raw.githubusercontent.com URLs pinned to a commit, so they never move.
-   Flathub mirrors them at build time. Newer screenshots: commit them, then
-   bump the commit in the URLs.
-3. **aarch64.** Uncomment the arm64 source in the manifest with the first
-   release that carries `STR-Linux-arm64.tar.gz`.
-4. Fork https://github.com/flathub/flathub, branch off `new-pr`, add the
-   three files from `packaging/flatpak/` plus the icons (copy them next to the
-   manifest and drop the `../linux/icons/` prefix), and open the pull request
-   against `new-pr`. Flathub's reviewers build it and comment.
-5. After the merge Flathub creates `flathub/de.st_reborn.STReborn`. From then
-   on its external data checker opens a pull request there for every new
-   release (`x-checker-data` in the manifest); merging it publishes the
-   update. Add the new `<release>` line to the metainfo there as well.
-
-Two finish-args a reviewer may ask about: `--own-name` for Wails' single
-instance bus name (without it a second start opens a second window), and
-`/media` plus `/run/media` for the USB stick fallback install.
+Flathub was looked at on 2026-10-13 and dropped: its requirements forbid
+AI-generated or AI-assisted content in manifests and AI tools opening or
+writing submission pull requests, and require disclosing AI-generated code in
+the application itself. Do not resubmit the idea without revisiting that
+policy.

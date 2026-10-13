@@ -275,7 +275,6 @@
   "banner.connecting": "Connecting...",
   "banner.installing": "Installing...",
   "banner.macDownloaded": "Downloaded and verified. Open the .dmg and drag ST Reborn into Applications, replacing the old one.",
-  "banner.flatpakUpdate": "Update it in your software center, or run: flatpak update",
   "banner.debHandoff": "The update is open in your package installer. Confirm it there, then start ST Reborn again.",
   "banner.macReadyTitle": "Almost done.",
   "banner.macShowFile": "Show file",

@@ -155,8 +155,7 @@ func updateAssetKeys() []string {
 // has one archive per architecture, and an ARM64 app must never fall back to
 // the x86_64 one: it would swap itself for a binary its machine cannot run. A
 // release without the ARM64 archive then offers no update at all. A copy the
-// .deb installed updates from the next .deb only (see linuxpkg.go), and a
-// Flathub copy downloads nothing.
+// .deb installed updates from the next .deb only (see linuxpkg.go).
 func updateAssetKeysFor(goos, goarch, pkg string) []string {
 	switch goos {
 	case "windows":
@@ -169,10 +168,7 @@ func updateAssetKeysFor(goos, goarch, pkg string) []string {
 		// anything is downloaded, and it used to leave no trace at all.
 		return []string{"desktop_macos"}
 	case "linux":
-		switch pkg {
-		case linuxPkgFlatpak:
-			return nil
-		case linuxPkgDeb:
+		if pkg == linuxPkgDeb {
 			if goarch == "arm64" {
 				return []string{"desktop_linux_arm64_deb"}
 			}
@@ -202,8 +198,8 @@ func canSelfReplace() bool {
 		// Same question macOS asks, for the same reason: a binary installed
 		// into /opt or /usr/local by root cannot be swapped by the user running
 		// it, and finding that out only when the rename fails means the user
-		// has already sat through a download and pressed Install. A .deb or
-		// Flathub copy belongs to its package manager (linuxpkg.go).
+		// has already sat through a download and pressed Install. A .deb
+		// copy belongs to dpkg (linuxpkg.go).
 		if linuxPackage() != linuxPkgNone {
 			return false
 		}
@@ -357,10 +353,6 @@ func (a *App) DownloadUpdate(version string) (string, error) {
 		a.logger.Info("app update: winget-managed install, not downloading", "version", version)
 		return "", errWingetManaged
 	}
-	if linuxPackage() == linuxPkgFlatpak {
-		a.logger.Info("app update: Flathub install, not downloading", "version", version)
-		return "", errFlatpakManaged
-	}
 	started := time.Now()
 	a.logger.Info("app update: download starting, looking up the release", "version", version)
 	asset, err := a.ResolveUpdateAsset(version)
@@ -513,11 +505,7 @@ func (a *App) ApplyUpdate(downloadedPath string) error {
 		a.logger.Info("app update: winget-managed install, refusing the in-place swap", "file", downloadedPath)
 		return errWingetManaged
 	}
-	switch linuxPackage() {
-	case linuxPkgFlatpak:
-		a.logger.Info("app update: Flathub install, refusing the in-place swap", "file", downloadedPath)
-		return errFlatpakManaged
-	case linuxPkgDeb:
+	if linuxPackage() == linuxPkgDeb {
 		return a.applyLinuxDeb(downloadedPath)
 	}
 	switch runtime.GOOS {

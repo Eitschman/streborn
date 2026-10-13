@@ -1,6 +1,6 @@
 package main
 
-// A Linux copy of ST Reborn can come three ways, and only one of them may
+// A Linux copy of ST Reborn can come two ways, and only one of them may
 // update itself by swapping its own binary:
 //
 //   - the tar.gz from the release: the binary lives wherever the user put it
@@ -9,13 +9,9 @@ package main
 //     would fail on the root-owned folder anyway, and if it did not, dpkg's
 //     record would stay on the old version. Such a copy downloads the next
 //     .deb and hands it to the system's package installer.
-//   - Flathub: the binary sits in the read-only /app of the sandbox, and
-//     updates come from Flathub through the software center. Nothing is
-//     downloaded in the app at all.
 
 import (
 	"bufio"
-	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -24,9 +20,8 @@ import (
 )
 
 const (
-	linuxPkgNone    = ""
-	linuxPkgDeb     = "deb"
-	linuxPkgFlatpak = "flatpak"
+	linuxPkgNone = ""
+	linuxPkgDeb  = "deb"
 )
 
 // debPackageName is the package name in .github/scripts/build-deb.sh.
@@ -37,8 +32,8 @@ var (
 	linuxPkg     string
 )
 
-// linuxPackage reports how this copy was installed on Linux: linuxPkgDeb,
-// linuxPkgFlatpak, or linuxPkgNone for the tar.gz and every other OS.
+// linuxPackage reports how this copy was installed on Linux: linuxPkgDeb, or
+// linuxPkgNone for the tar.gz and every other OS.
 func linuxPackage() string {
 	linuxPkgOnce.Do(func() {
 		if runtime.GOOS != "linux" {
@@ -51,7 +46,7 @@ func linuxPackage() string {
 		if r, e := filepath.EvalSymlinks(exe); e == nil {
 			exe = r
 		}
-		linuxPkg = detectLinuxPackage(exe, os.Getenv("FLATPAK_ID"), "/.flatpak-info", "/var/lib/dpkg/info")
+		linuxPkg = detectLinuxPackage(exe, "/var/lib/dpkg/info")
 	})
 	return linuxPkg
 }
@@ -60,13 +55,7 @@ func linuxPackage() string {
 // decision can be tested anywhere. A .deb counts only when dpkg's file list of
 // the package names this very binary: a tar.gz copy in ~/.local/bin on a
 // machine that also has the .deb installed still updates itself.
-func detectLinuxPackage(exe, flatpakID, flatpakInfo, dpkgInfoDir string) string {
-	if flatpakID != "" {
-		return linuxPkgFlatpak
-	}
-	if _, err := os.Stat(flatpakInfo); err == nil {
-		return linuxPkgFlatpak
-	}
+func detectLinuxPackage(exe, dpkgInfoDir string) string {
 	lists, _ := filepath.Glob(filepath.Join(dpkgInfoDir, debPackageName+"*.list"))
 	for _, l := range lists {
 		base := strings.TrimSuffix(filepath.Base(l), ".list")
@@ -94,7 +83,3 @@ func dpkgListHas(list, path string) bool {
 	}
 	return false
 }
-
-// errFlatpakManaged is what the download and install steps answer in a copy
-// from Flathub, whose updates come through the software center.
-var errFlatpakManaged = errors.New("this copy of ST Reborn comes from Flathub; update it in your software center or with: flatpak update")

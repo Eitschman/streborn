@@ -10,8 +10,7 @@ import (
 
 // An ARM64 Linux app updating itself from the x86_64 archive would replace
 // itself with a binary it cannot run, so each architecture gets its own key and
-// ARM64 has no fallback. A .deb copy updates from the .deb only, and a Flathub
-// copy downloads nothing.
+// ARM64 has no fallback. A .deb copy updates from the .deb only.
 func TestUpdateAssetKeysLinuxByArch(t *testing.T) {
 	cases := []struct {
 		arch, pkg string
@@ -21,7 +20,6 @@ func TestUpdateAssetKeysLinuxByArch(t *testing.T) {
 		{"arm64", linuxPkgNone, []string{"desktop_linux_arm64"}},
 		{"amd64", linuxPkgDeb, []string{"desktop_linux_deb"}},
 		{"arm64", linuxPkgDeb, []string{"desktop_linux_arm64_deb"}},
-		{"amd64", linuxPkgFlatpak, nil},
 	}
 	for _, c := range cases {
 		if got := updateAssetKeysFor("linux", c.arch, c.pkg); !slices.Equal(got, c.want) {
@@ -39,20 +37,18 @@ func TestDetectLinuxPackage(t *testing.T) {
 	if err := os.MkdirAll(info, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	noFlatpak := filepath.Join(dir, "no-flatpak-info")
-
-	if got := detectLinuxPackage("/usr/bin/st-reborn", "", noFlatpak, info); got != linuxPkgNone {
+	if got := detectLinuxPackage("/usr/bin/st-reborn", info); got != linuxPkgNone {
 		t.Fatalf("nothing installed: got %q", got)
 	}
 	list := "/.\n/usr\n/usr/bin\n/usr/bin/st-reborn\n/usr/share/applications/st-reborn.desktop\n"
 	if err := os.WriteFile(filepath.Join(info, "st-reborn.list"), []byte(list), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := detectLinuxPackage("/usr/bin/st-reborn", "", noFlatpak, info); got != linuxPkgDeb {
+	if got := detectLinuxPackage("/usr/bin/st-reborn", info); got != linuxPkgDeb {
 		t.Fatalf("binary dpkg owns: got %q", got)
 	}
 	// A tar.gz copy on a machine that also has the .deb keeps updating itself.
-	if got := detectLinuxPackage("/home/u/.local/bin/st-reborn", "", noFlatpak, info); got != linuxPkgNone {
+	if got := detectLinuxPackage("/home/u/.local/bin/st-reborn", info); got != linuxPkgNone {
 		t.Fatalf("tar.gz copy beside the .deb: got %q", got)
 	}
 	// Another package whose name starts the same way does not count.
@@ -60,7 +56,7 @@ func TestDetectLinuxPackage(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(info, "st-reborn-extras.list"), []byte(list), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := detectLinuxPackage("/usr/bin/st-reborn", "", noFlatpak, info); got != linuxPkgNone {
+	if got := detectLinuxPackage("/usr/bin/st-reborn", info); got != linuxPkgNone {
 		t.Fatalf("other package: got %q", got)
 	}
 	// dpkg names a multi-arch list "st-reborn:arm64.list". Windows cannot
@@ -70,18 +66,8 @@ func TestDetectLinuxPackage(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(info, "st-reborn:arm64.list"), []byte(list), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		if got := detectLinuxPackage("/usr/bin/st-reborn", "", noFlatpak, info); got != linuxPkgDeb {
+		if got := detectLinuxPackage("/usr/bin/st-reborn", info); got != linuxPkgDeb {
 			t.Fatalf("arch-qualified list: got %q", got)
 		}
-	}
-	if got := detectLinuxPackage("/app/bin/st-reborn", "de.st_reborn.STReborn", noFlatpak, info); got != linuxPkgFlatpak {
-		t.Fatalf("flatpak by env: got %q", got)
-	}
-	fi := filepath.Join(dir, "flatpak-info")
-	if err := os.WriteFile(fi, []byte("[Application]\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if got := detectLinuxPackage("/app/bin/st-reborn", "", fi, info); got != linuxPkgFlatpak {
-		t.Fatalf("flatpak by info file: got %q", got)
 	}
 }
